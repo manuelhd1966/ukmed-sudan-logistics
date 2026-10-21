@@ -1,0 +1,1071 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sudan Logistics Maintenance Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+*{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}
+/* Layout: control-room board — dark ink header band with month + tabs, then summary tiles, action board, and per-domain logbooks (form in a dialog, register table below). */
+:root{
+  --bg:#eef0ec; --panel:#ffffff; --panel-2:#f6f7f4; --ink:#16202a; --muted:#5a6570; --line:#d6dbd3;
+  --band:#16202a; --band-ink:#eef1f3; --band-muted:#9fb0bd;
+  --accent:#b8560f; --accent-ink:#ffffff; --accent-soft:#f7e6d8;
+  --ok:#2e7a48; --ok-soft:#e1f0e6; --warn:#9a6a00; --warn-soft:#f8ecc9; --bad:#b1271f; --bad-soft:#f8dedb;
+  --bar:#3d5a73; --bar-2:#b8560f;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1418; --panel:#171e24; --panel-2:#1c242b; --ink:#e6eaed; --muted:#9aa6b0; --line:#2b353e;
+  --band:#0a0e11; --band-ink:#eef1f3; --band-muted:#8c9cab;
+  --accent:#f08f45; --accent-ink:#1a0e05; --accent-soft:#3a2516;
+  --ok:#6cc58c; --ok-soft:#18321f; --warn:#e3b54a; --warn-soft:#3a2f12; --bad:#f07a70; --bad-soft:#3d1a18;
+  --bar:#8fb0cb; --bar-2:#f08f45; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1418; --panel:#171e24; --panel-2:#1c242b; --ink:#e6eaed; --muted:#9aa6b0; --line:#2b353e;
+  --band:#0a0e11; --band-ink:#eef1f3; --band-muted:#8c9cab;
+  --accent:#f08f45; --accent-ink:#1a0e05; --accent-soft:#3a2516;
+  --ok:#6cc58c; --ok-soft:#18321f; --warn:#e3b54a; --warn-soft:#3a2f12; --bad:#f07a70; --bad-soft:#3d1a18;
+  --bar:#8fb0cb; --bar-2:#f08f45; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--band)}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{background:var(--band);color:var(--band-ink);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.top .row1{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between;padding-block:14px 10px}
+.brand{font-family:var(--f-display);font-weight:700;font-size:clamp(24px,3.2vw,32px);line-height:1;letter-spacing:.01em;color:var(--band-ink)}
+.owner{font-family:var(--f-body);font-weight:500;font-size:14px;color:var(--band-ink);margin-top:6px}
+.owner span{color:var(--accent)}
+.stages{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:6px}
+.stg{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;min-width:0;text-align:left;font:inherit;color:var(--ink);cursor:pointer}
+.stg:hover{border-color:var(--muted)}
+.stg[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.stg[aria-pressed=true] .k{color:var(--bg)}
+.stg .k{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.stg .v{font-family:var(--f-display);font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.stg.hot{border-color:var(--accent)}
+.prog{display:flex;gap:2px;margin-top:4px}.prog i{flex:1;height:4px;border-radius:2px;background:var(--line)}.prog i.on{background:var(--accent)}
+.flags{display:flex;flex-wrap:wrap;gap:3px}
+@media (max-width:700px){header.top{position:static}}
+.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--band-muted)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(24px,3.4vw,34px);letter-spacing:.02em;text-transform:uppercase;margin:2px 0 0;line-height:1;text-wrap:balance}
+h1 span{color:var(--accent)}
+.ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.ctl label{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--band-muted)}
+.ctl input[type=month]{font-family:var(--f-mono);font-size:14px;background:transparent;color:var(--band-ink);border:1px solid #3a4652;border-radius:var(--r);padding:6px 8px;color-scheme:dark}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{font-family:var(--f-display);font-weight:600;font-size:16px;letter-spacing:.05em;text-transform:uppercase;background:none;border:0;color:var(--band-muted);padding:9px 14px 10px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+nav.tabs button:hover{color:var(--band-ink)}
+nav.tabs button[aria-selected=true]{color:var(--band-ink);border-bottom-color:var(--accent)}
+nav.tabs .n{font-family:var(--f-mono);font-size:11px;background:var(--bad);color:#fff;border-radius:9px;padding:0 6px;margin-left:5px;vertical-align:2px}
+main{padding-block:20px 48px}
+.status-line{font-family:var(--f-mono);font-size:12px;color:var(--muted);margin-bottom:14px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.status-line .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block;margin-right:6px}
+.status-line .live .dot{background:var(--ok)}
+.status-line .off .dot{background:var(--bad)}
+h2{font-family:var(--f-display);font-weight:700;font-size:22px;text-transform:uppercase;letter-spacing:.04em;margin:0}
+h3{font-family:var(--f-display);font-weight:600;font-size:17px;text-transform:uppercase;letter-spacing:.05em;margin:0;color:var(--muted)}
+.sec{display:grid;gap:14px;margin-bottom:28px}
+.sec-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.sec-head p{margin:2px 0 0;color:var(--muted);max-width:68ch}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:2px;min-width:0}
+.tile .k{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tile .v{font-family:var(--f-display);font-weight:600;font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile .v small{font-size:15px;color:var(--muted);font-weight:500;margin-left:3px}
+.tile .s{font-size:12px;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:10px;align-content:start;min-width:0}
+.card .ttl{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.card .ttl b{font-family:var(--f-display);font-size:19px;font-weight:600;letter-spacing:.02em}
+.card .meta{font-size:12px;color:var(--muted)}
+dl.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0;font-size:13px}
+dl.kv dt{color:var(--muted)}
+dl.kv dd{margin:0;text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.meter{height:8px;background:var(--panel-2);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--ok)}
+.meter i.warn{background:var(--warn)} .meter i.bad{background:var(--bad)}
+.pill{display:inline-flex;align-items:center;gap:5px;font-family:var(--f-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:10px;white-space:nowrap;background:var(--panel-2);color:var(--muted);border:1px solid var(--line)}
+.pill.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.pill.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.pill.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.actions{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.act{display:grid;grid-template-columns:6px 1fr auto;gap:12px;align-items:center;padding:10px 14px 10px 0;border-top:1px solid var(--line)}
+.act:first-child{border-top:0}
+.act .stripe{align-self:stretch;background:var(--muted)}
+.act.bad .stripe{background:var(--bad)} .act.warn .stripe{background:var(--warn)} .act.ok .stripe{background:var(--ok)}
+.act .what{min-width:0}
+.act .what b{font-weight:600}
+.act .what div{font-size:12px;color:var(--muted)}
+.act .where{font-family:var(--f-mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.empty{padding:22px 16px;text-align:center;color:var(--muted);background:var(--panel);border:1px dashed var(--line);border-radius:var(--r)}
+.empty b{display:block;color:var(--ink);margin-bottom:4px}
+.tblwrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;font-weight:500;padding:9px 10px;border-bottom:1px solid var(--line);background:var(--panel-2);white-space:nowrap;position:sticky;top:0}
+td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.wrap{min-width:180px;max-width:340px}
+td .sub{display:block;font-size:11.5px;color:var(--muted)}
+tbody tr:hover{background:var(--panel-2)}
+tfoot td{font-weight:600;background:var(--panel-2);border-top:2px solid var(--line)}
+.btn{font-family:var(--f-body);font-weight:600;font-size:13px;border-radius:var(--r);border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.small{padding:3px 8px;font-size:12px;font-weight:500}
+.btn:focus-visible,nav.tabs button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:12.5px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:14px;padding:4px 11px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chart{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px 8px}
+.chart .hd{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline;margin-bottom:6px}
+.chart .readout{font-family:var(--f-mono);font-size:12px;color:var(--muted);min-height:1.4em}
+.chart svg{display:block;width:100%;height:auto}
+.note{font-size:12px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px;max-width:90ch}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:14px}
+.grid2>*{min-width:0}
+dialog{border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);padding:0;width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 40px)}
+dialog::backdrop{background:rgba(10,14,17,.55)}
+dialog form{display:grid;grid-template-rows:auto 1fr auto;max-height:calc(100vh - 42px)}
+.dlg-h{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.dlg-b{padding:16px 18px;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px 14px}
+.dlg-f{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;background:var(--panel-2)}
+.fld{display:grid;gap:4px;min-width:0}
+.fld.full{grid-column:1/-1}
+.fld label{font-size:12px;font-weight:600;color:var(--muted)}
+.fld label i{font-style:normal;color:var(--bad)}
+.fld input,.fld select,.fld textarea{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:7px 9px;width:100%;box-sizing:border-box}
+.fld input[type=number]{font-family:var(--f-mono)}
+.fld textarea{min-height:64px;resize:vertical}
+.fld .hint{font-size:11.5px;color:var(--muted)}
+.err{color:var(--bad);font-size:12.5px;grid-column:1/-1}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:var(--r);font-size:13px;z-index:50;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.hb{background:transparent;color:var(--band-ink);border-color:#3a4652}
+.ro-banner{background:var(--warn-soft);color:var(--warn);padding:8px 12px;border-radius:var(--r);font-size:13px;margin-bottom:14px}
+.rv-head{display:grid;gap:4px;padding-bottom:16px;margin-bottom:22px;border-bottom:3px solid var(--ink)}
+.rv-head .ey{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.rv-title{font-family:var(--f-display);font-weight:700;font-size:clamp(26px,3.6vw,38px);text-transform:uppercase;letter-spacing:.02em;margin:0;line-height:1.05}
+.rv-head .meta{font-size:13px;color:var(--muted)}
+.rv-sec{padding-top:6px;border-top:1px solid var(--line)}
+.rv-sub{font-family:var(--f-display);font-weight:600;font-size:15px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:4px 0 -4px}
+.rv-legend{font-size:12px;color:var(--muted)}
+@media print{header.top,.status-line,.noprint,body::before{display:none!important}body{background:#fff;color:#000}.tblwrap{overflow:visible;border-color:#bbb}th{position:static}.rv-sec{break-inside:auto}tr{break-inside:avoid}.tile,.card{break-inside:avoid}}
+@media (max-width:560px){.tile .v{font-size:26px}.act{grid-template-columns:5px 1fr}.act .where{grid-column:2}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="row1">
+      <div>
+        <div class="brand">UK-Med</div>
+        <div class="eyebrow">Sudan mission · Logistics department</div>
+        <h1>Maintenance <span>&amp;</span> monthly needs board</h1>
+        <div class="owner">Manuel Hernández Díez <span>·</span> Logistics Manager</div>
+      </div>
+      <div class="ctl">
+        <label for="month">Reporting month</label>
+        <input type="month" id="month">
+        <button type="button" class="btn small hb" id="bkBtn">Backup</button>
+        <label class="btn small hb" for="rsFile" style="text-transform:none;letter-spacing:0;font-family:var(--f-body);color:var(--band-ink)">Restore</label>
+        <input type="file" id="rsFile" accept=".json,application/json" hidden>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist" id="tabs"></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="status-line" id="statusLine"><span id="conn"><span class="dot"></span>Connecting to the shared logbook…</span><span id="today"></span></div>
+  <div id="ro" class="ro-banner" hidden>You can view this board but your access level does not allow adding or editing records. Ask the logistics manager for Contributor access.</div>
+  <div id="view"></div>
+</main>
+
+<dialog id="dlg"><form id="dlgForm" method="dialog" novalidate>
+  <div class="dlg-h"><h2 id="dlgTitle">Record</h2><button type="button" class="btn small" id="dlgClose">Close</button></div>
+  <div class="dlg-b" id="dlgBody"></div>
+  <div class="dlg-f"><div><button type="button" class="btn danger" id="dlgDelete" hidden>Delete record</button></div><div style="display:flex;gap:8px"><button type="button" class="btn" id="dlgCancel">Cancel</button><button type="submit" class="btn primary" id="dlgSave">Save</button></div></div>
+</form></dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- constants ---------- */
+const SITES=["Office","Guesthouse","MERU Clinic"];
+const COLLS=["assets","genlog","genmaint","spares","sparemov","solar","vehlog","facility","itlog","pr"];
+const PR_STAGES=["Draft","Submitted","Approved","RFQ / quotations","PO issued","Partially delivered","Delivered (GRN)","Invoiced","Paid","Rejected","Cancelled"];
+const PR_CATS=["Medical supplies & pharmacy","Fuel & lubricants","Spare parts","Construction / rehabilitation materials","IT & communications","Vehicles & fleet","WASH supplies","Office & accommodation supplies","Services & contracts","Other"];
+const CURR=["SDG","USD","GBP","EUR"];
+const stIdx=s=>PR_STAGES.indexOf(s);const prClosed=s=>s==="Rejected"||s==="Cancelled";
+const reach=i=>v=>prClosed(v.status)||stIdx(v.status)>=i;
+const IT_CATS=[["computer","Computer / laptop"],["garmin","Garmin GPS / inReach"],["vhf","VHF radio"],["starlink","Starlink"],["other","Other IT / comms"]];
+const IT_STATUS=["In service","Under repair","Out of service","Lost / stolen","Disposed"];
+const IT_WORK=["Preventive check","Software / OS updates","Antivirus & data backup","Firmware update","Battery check / replacement","Cleaning","Radio test call","Starlink speed test","Repair","Other"];
+const catName=c=>(IT_CATS.find(x=>x[0]===c)||[0,"—"])[1];
+const GEN_MAINT_TYPES=["Oil & oil filter change","Full service","Fuel filter change","Air filter change","Coolant / belts / hoses check","Starter battery check","Repair","Inspection","Other"];
+const GEN_RESET=["Oil & oil filter change","Full service"];
+const SOLAR_CHECKS=[["cPanels","PV panels & mounting"],["cCables","Cables, connectors & junction boxes"],["cInverter","Inverter / charge controller"],["cBattery","Batteries & terminals"],["cProtect","Breakers, fuses, SPD & earthing"],["cVent","Battery room ventilation & temperature"]];
+const OKISSUE=["OK","Issue","N/A"];
+const PURPOSES=["Programme / clinic visit","Medical / ambulance transfer","Supply / procurement","Staff movement","Workshop / vehicle maintenance","Security / coordination meeting","Other"];
+const AREAS=["Electrical","Plumbing / WASH","Air conditioning","Building / carpentry","Furniture & fittings","IT / communications","Cleaning / pest control","Other"];
+const PRIOS=["High","Medium","Low"];
+const STATUSES=["Open","In progress","Done"];
+const TABS=[["overview","Overview"],["review","Monthly review"],["procurement","Procurement"],["generators","Generators & spares"],["solar","Solar"],["vehicles","Vehicles"],["it","IT & comms"],["facilities","Facilities"],["registry","Equipment register"]];
+
+/* ---------- state ---------- */
+const S={}; COLLS.forEach(c=>S[c]=[]);
+const loaded={};
+let db=null, downloads=null, canWrite=true, tab="overview";
+const filt={gen:"all",veh:"all",fac:"all",facStatus:"open",it:"all",pr:"active"};
+const $=id=>document.getElementById(id);
+const monthEl=$("month");
+
+/* ---------- utils ---------- */
+function el(tag,attrs,...kids){const e=document.createElement(tag);if(attrs)for(const k in attrs){const v=attrs[k];if(v==null||v===false)continue;if(k==="class")e.className=v;else if(k==="text")e.textContent=v;else if(k.startsWith("on"))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v===true?"":v);}for(const k of kids.flat()){if(k==null||k===false)continue;e.append(k instanceof Node?k:document.createTextNode(String(k)));}return e;}
+const pad=n=>String(n).padStart(2,"0");
+function todayStr(){const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+function curMonth(){return monthEl.value||todayStr().slice(0,7);}
+function daysInMonth(m){const [y,mo]=m.split("-").map(Number);return new Date(y,mo,0).getDate();}
+function addDays(ds,n){const [y,m,d]=ds.split("-").map(Number);const t=new Date(y,m-1,d+n);return t.getFullYear()+"-"+pad(t.getMonth()+1)+"-"+pad(t.getDate());}
+function diffDays(a,b){const p=s=>{const [y,m,d]=s.split("-").map(Number);return Date.UTC(y,m-1,d);};return Math.round((p(b)-p(a))/864e5);}
+function fmtDate(s){if(!s)return"—";const [y,m,d]=s.split("-");return d+" "+["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+m-1]+" "+y;}
+function monthLabel(m){const [y,mo]=m.split("-");return ["January","February","March","April","May","June","July","August","September","October","November","December"][+mo-1]+" "+y;}
+const isNum=v=>typeof v==="number"&&isFinite(v);
+function n(v,dp){if(!isNum(v))return"—";return v.toLocaleString("en-GB",{minimumFractionDigits:dp||0,maximumFractionDigits:dp||0});}
+function sum(a,f){return a.reduce((s,x)=>{const v=f(x);return s+(isNum(v)?v:0);},0);}
+function sortDate(a){return a.slice().sort((x,y)=>(x.date||"").localeCompare(y.date||"")||((x.created||0)-(y.created||0)));}
+function inMonth(r,m,k){return (r[k||"date"]||"").startsWith(m);}
+function asset(id){return S.assets.find(a=>a.id===id);}
+function aName(id){const a=asset(id);return a?a.name:"(removed equipment)";}
+function assetsOf(kind){return S.assets.filter(a=>a.kind===kind).sort((a,b)=>(a.site||"").localeCompare(b.site||"")||(a.name||"").localeCompare(b.name||""));}
+function pill(cls,txt){return el("span",{class:"pill "+(cls||"")},txt);}
+function toast(msg){const t=$("toast");t.textContent=msg;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2600);}
+function emptyBox(title,body,btn){return el("div",{class:"empty"},el("b",null,title),el("div",null,body),btn?el("div",{style:"margin-top:10px"},btn):null);}
+function addBtn(label,fn){return canWrite?el("button",{class:"btn primary",type:"button",onclick:fn},"+ "+label):null;}
+function editBtn(fn){return canWrite?el("button",{class:"btn small",type:"button",onclick:fn},"Edit"):null;}
+
+/* ---------- table helper ---------- */
+function table(cols,rows,opts){
+  opts=opts||{};
+  if(!rows.length)return emptyBox(opts.emptyTitle||"No records yet",opts.emptyBody||"",opts.emptyBtn);
+  const thead=el("thead",null,el("tr",null,cols.map(c=>el("th",{class:c.num?"num":null},c.h))));
+  const tbody=el("tbody",null,rows.map(r=>el("tr",null,cols.map(c=>{const v=c.f(r);return el("td",{class:(c.num?"num ":"")+(c.wrap?"wrap":"")},v==null?"—":v);}))));
+  const t=el("table",null,thead,tbody);
+  if(opts.foot)t.append(el("tfoot",null,el("tr",null,cols.map((c,i)=>el("td",{class:c.num?"num":null},opts.foot[i]==null?"":opts.foot[i])))));
+  return el("div",{class:"tblwrap"},t);
+}
+
+/* ---------- bar chart (daily) ---------- */
+function barChart(title,unit,values,labels,color){
+  const box=el("div",{class:"chart"});const readout=el("div",{class:"readout"},"Hover or tap a bar for the daily value");
+  box.append(el("div",{class:"hd"},el("h3",null,title),readout));
+  const holder=el("div");box.append(holder);
+  requestAnimationFrame(()=>{
+    const W=Math.max(300,holder.clientWidth||600),H=170,pl=40,pr=8,pt=10,pb=22;
+    const max=Math.max(1,...values.map(v=>v||0));
+    const step=niceStep(max);const top=Math.ceil(max/step)*step;
+    const ns="http://www.w3.org/2000/svg";const svg=document.createElementNS(ns,"svg");
+    svg.setAttribute("viewBox","0 0 "+W+" "+H);svg.setAttribute("width","100%");svg.setAttribute("role","img");svg.setAttribute("aria-label",title);
+    const iw=W-pl-pr,ih=H-pt-pb,bw=iw/values.length;
+    for(let g=0;g<=top+1e-9;g+=step){const y=pt+ih-(g/top)*ih;
+      const ln=document.createElementNS(ns,"line");ln.setAttribute("x1",pl);ln.setAttribute("x2",W-pr);ln.setAttribute("y1",y);ln.setAttribute("y2",y);ln.setAttribute("stroke","var(--line)");ln.setAttribute("stroke-width","1");svg.append(ln);
+      const tx=document.createElementNS(ns,"text");tx.setAttribute("x",pl-6);tx.setAttribute("y",y+3.5);tx.setAttribute("text-anchor","end");tx.setAttribute("font-size","10");tx.setAttribute("font-family","IBM Plex Mono, monospace");tx.setAttribute("fill","var(--muted)");tx.textContent=fmtTick(g);svg.append(tx);}
+    values.forEach((v,i)=>{const x=pl+i*bw;
+      if(isNum(v)&&v>0){const h=(v/top)*ih;const r=document.createElementNS(ns,"rect");r.setAttribute("x",x+bw*.15);r.setAttribute("width",Math.max(1,bw*.7));r.setAttribute("y",pt+ih-h);r.setAttribute("height",h);r.setAttribute("rx","1.5");r.setAttribute("fill",color||"var(--bar)");svg.append(r);}
+      const hit=document.createElementNS(ns,"rect");hit.setAttribute("x",x);hit.setAttribute("width",bw);hit.setAttribute("y",pt);hit.setAttribute("height",ih+pb);hit.setAttribute("fill","transparent");
+      const show=()=>{readout.textContent=labels[i]+": "+(isNum(v)?n(v,unit==="h"?1:0)+" "+unit:"no record");};
+      hit.addEventListener("mouseenter",show);hit.addEventListener("click",show);svg.append(hit);
+      if(values.length<=31&&(i===0||(i+1)%5===0)){const tx=document.createElementNS(ns,"text");tx.setAttribute("x",x+bw/2);tx.setAttribute("y",H-6);tx.setAttribute("text-anchor","middle");tx.setAttribute("font-size","10");tx.setAttribute("font-family","IBM Plex Mono, monospace");tx.setAttribute("fill","var(--muted)");tx.textContent=String(i+1);svg.append(tx);}
+    });
+    holder.append(svg);
+  });
+  return box;
+}
+function niceStep(max){const raw=max/4;const p=Math.pow(10,Math.floor(Math.log10(raw)));const m=raw/p;return (m<=1?1:m<=2?2:m<=5?5:10)*p;}
+function fmtTick(v){return v>=1000?(v/1000).toFixed(v%1000?1:0)+"k":(Math.round(v*10)/10).toString();}
+
+/* ---------- domain calculations ---------- */
+function genCalc(aid,m){
+  const a=asset(aid)||{};
+  const logs=sortDate(S.genlog.filter(r=>r.asset===aid));
+  const maint=sortDate(S.genmaint.filter(r=>r.asset===aid));
+  const ml=logs.filter(r=>inMonth(r,m));
+  const runH=r=>isNum(r.hStart)&&isNum(r.hEnd)&&r.hEnd>=r.hStart?r.hEnd-r.hStart:null;
+  const hours=sum(ml,runH), fuel=sum(ml,r=>r.fuelL);
+  const hoursLogged=ml.filter(r=>runH(r)!=null).length;
+  const readings=[...logs.flatMap(r=>[r.hStart,r.hEnd]),...maint.map(r=>r.hours)].filter(isNum);
+  const meter=readings.length?Math.max(...readings):null;
+  const lastSvc=maint.filter(r=>GEN_RESET.includes(r.type)&&isNum(r.hours)).pop()||null;
+  let due=null,remain=null,state="nodata",stateTxt="Service interval or last service not recorded";
+  if(isNum(a.serviceHours)&&a.serviceHours>0){
+    if(lastSvc){due=lastSvc.hours+a.serviceHours;}
+    if(due!=null&&meter!=null){remain=due-meter;
+      if(remain<0){state="bad";stateTxt="Service overdue by "+n(-remain,1)+" h";}
+      else if(remain<=Math.max(25,a.serviceHours*.1)){state="warn";stateTxt="Service due in "+n(remain,1)+" h";}
+      else{state="ok";stateTxt=n(remain,1)+" h to next service";}}
+    else if(!lastSvc){stateTxt="No oil change / full service recorded yet";}
+  }
+  const lastLog=logs.length?logs[logs.length-1]:null;
+  // continuity: start reading vs previous end reading
+  const gaps={};for(let i=1;i<logs.length;i++){const p=logs[i-1],c=logs[i];if(isNum(p.hEnd)&&isNum(c.hStart)){const g=Math.round((c.hStart-p.hEnd)*10)/10;if(g!==0)gaps[c.id]=g;}}
+  return {a,logs,ml,maint,hours,fuel,hoursLogged,meter,lastSvc,due,remain,state,stateTxt,lastLog,gaps,runH,
+    lph:hours>0&&fuel>0?fuel/hours:null};
+}
+function partStock(pid){return sum(S.sparemov.filter(r=>r.part===pid),r=>r.dir==="IN"?r.qty:-r.qty);}
+function solarCalc(aid,m){
+  const a=asset(aid)||{};
+  const checks=sortDate(S.solar.filter(r=>r.asset===aid));
+  const last=checks.length?checks[checks.length-1]:null;
+  const mc=checks.filter(r=>inMonth(r,m));
+  let state="nodata",txt="No check recorded yet",next=null;
+  if(last){
+    const issues=SOLAR_CHECKS.filter(([k])=>last[k]==="Issue").map(x=>x[1]);
+    if(isNum(a.checkDays)&&a.checkDays>0){next=addDays(last.date,a.checkDays);const d=diffDays(todayStr(),next);
+      if(d<0){state="bad";txt="Check overdue by "+(-d)+" day"+(d===-1?"":"s");}
+      else if(d<=3){state="warn";txt="Check due "+(d===0?"today":"in "+d+" day"+(d===1?"":"s"));}
+      else{state="ok";txt="Next check "+fmtDate(next);}}
+    else{state="nodata";txt="Check interval not set in the register";}
+    if(issues.length){state="bad";txt="Open issue at last check: "+issues.join(", ");}
+  }
+  return {a,checks,last,mc,state,txt,next};
+}
+function vehCalc(aid,m){
+  const a=asset(aid)||{};
+  const logs=sortDate(S.vehlog.filter(r=>r.asset===aid));
+  const km=r=>isNum(r.odoStart)&&isNum(r.odoEnd)&&r.odoEnd>=r.odoStart?r.odoEnd-r.odoStart:null;
+  const ml=logs.filter(r=>inMonth(r,m));
+  const kmM=sum(ml,km),fuelM=sum(ml,r=>r.fuelL);
+  const odos=logs.flatMap(r=>[r.odoStart,r.odoEnd]).filter(isNum);
+  const odo=odos.length?Math.max(...odos):null;
+  const gaps={};for(let i=1;i<logs.length;i++){const p=logs[i-1],c=logs[i];if(isNum(p.odoEnd)&&isNum(c.odoStart)&&c.odoStart!==p.odoEnd)gaps[c.id]=c.odoStart-p.odoEnd;}
+  let state="nodata",txt="Service interval or last service odometer not recorded",due=null;
+  if(isNum(a.serviceKm)&&a.serviceKm>0&&isNum(a.lastServiceOdo)){due=a.lastServiceOdo+a.serviceKm;
+    if(odo!=null){const r=due-odo;if(r<0){state="bad";txt="Service overdue by "+n(-r)+" km";}else if(r<=Math.max(500,a.serviceKm*.1)){state="warn";txt="Service due in "+n(r)+" km";}else{state="ok";txt=n(r)+" km to next service";}}}
+  const days=new Set(ml.map(r=>r.date)).size;
+  return {a,logs,ml,km,kmM,fuelM,odo,gaps,state,txt,due,days,l100:kmM>0&&fuelM>0?fuelM/kmM*100:null};
+}
+
+function itCalc(aid){
+  const a=asset(aid)||{};const t=todayStr();
+  const checks=sortDate(S.itlog.filter(r=>r.asset===aid));const last=checks.length?checks[checks.length-1]:null;
+  const st=a.status||"In service";let state="ok",txt="",next=null;
+  if(st==="Disposed")return {a,checks,last,next,state:"off",txt:"Disposed",renew:null,st};
+  if(st==="Lost / stolen"){state="bad";txt="Reported lost / stolen";}
+  else if(st==="Out of service"){state="bad";txt="Out of service";}
+  else if(st==="Under repair"){state="warn";txt="Under repair";}
+  else if(last&&last.result!=="OK"){state=last.result==="Not working"?"bad":"warn";txt=(last.result==="Not working"?"Not working":"Issue")+" at last check ("+fmtDate(last.date)+")";}
+  else if(!last){state="nodata";txt="No check recorded yet";}
+  if(last&&isNum(a.checkDays)&&a.checkDays>0){next=addDays(last.date,a.checkDays);
+    if(state==="ok"||state==="nodata"){const d=diffDays(t,next);if(d<0){state="bad";txt="Check overdue by "+(-d)+" day"+(d===-1?"":"s");}else if(d<=3){state="warn";txt="Check due "+(d===0?"today":"in "+d+" day"+(d===1?"":"s"));}else{txt="Next check "+fmtDate(next);}}}
+  else if(state==="ok"&&!isNum(a.checkDays))txt="Check interval not set";
+  let renew=null;if(a.renewDate){const d=diffDays(t,a.renewDate);renew=d<0?["bad","Renewal date passed "+fmtDate(a.renewDate)]:d<=14?["warn","Renewal due "+fmtDate(a.renewDate)]:["ok","Renews "+fmtDate(a.renewDate)];}
+  return {a,checks,last,next,state,txt,renew,st};
+}
+function prFlags(r){const t=todayStr(),i=stIdx(r.status),docs=[];let late=false;
+  if(!prClosed(r.status)){
+    if(i>=2&&!r.approvedDate)docs.push("Approval date missing");
+    if(i>=4){if(!r.poNo)docs.push("PO no. missing");if(!isNum(r.quotes))docs.push("Quotations not recorded");if(!r.cba||r.cba==="Pending")docs.push("CBA not recorded");if(!r.supplier)docs.push("Supplier missing");if(!isNum(r.poValue))docs.push("PO value missing");}
+    if(i>=6&&!r.grnNo)docs.push("GRN no. missing");
+    if(i>=7&&!r.invoiceNo)docs.push("Invoice no. missing");
+    if(i>=8&&!r.paidDate)docs.push("Payment date missing");
+    if(r.needBy&&i<6&&r.needBy<t)late=true;}
+  [[r.date,r.approvedDate,"Approved before PR date"],[r.approvedDate||r.date,r.poDate,"PO dated before PR/approval"],[r.poDate,r.grnDate,"GRN dated before PO"],[r.invoiceDate,r.paidDate,"Paid before invoice date"]].forEach(([a,b,msg])=>{if(a&&b&&b<a)docs.push(msg);});
+  return {docs,late};}
+function prLead(r){return {po:r.poDate&&r.date?diffDays(r.date,r.poDate):null,grn:r.grnDate&&r.date?diffDays(r.date,r.grnDate):null,poGrn:r.poDate&&r.grnDate?diffDays(r.poDate,r.grnDate):null,age:r.date?diffDays(r.date,r.grnDate||todayStr()):null};}
+function avg(a){return a.length?a.reduce((s,x)=>s+x,0)/a.length:null;}
+function sumByCur(rows,f){const by={};rows.forEach(r=>{const v=f(r);if(isNum(v)){const c=r.currency||"(no currency)";by[c]=(by[c]||0)+v;}});const k=Object.keys(by);return k.length?k.map(c=>n(by[c],0)+" "+c).join(" + "):"—";}
+const prOpen=r=>!prClosed(r.status)&&stIdx(r.status)<6;
+
+function itReadings(r){const c=(asset(r.asset)||{}).cat;const p=[];
+  if(c==="computer"){if(r.osUpd)p.push("Updates "+r.osUpd.toLowerCase());if(r.avUpd)p.push("Antivirus "+r.avUpd.toLowerCase());if(r.backup)p.push("Backup "+r.backup.toLowerCase());if(isNum(r.diskFreePct))p.push("Disk free "+n(r.diskFreePct)+"%");}
+  if(c==="garmin"&&r.wpUpd)p.push("Waypoints "+r.wpUpd.toLowerCase());
+  if(c==="vhf"){if(r.testCall)p.push("Test call "+r.testCall.toLowerCase());if(r.chan)p.push("Channels "+r.chan.toLowerCase());}
+  if(c==="starlink"){if(isNum(r.dlMbps))p.push("↓ "+n(r.dlMbps,1)+" Mbps");if(isNum(r.ulMbps))p.push("↑ "+n(r.ulMbps,1)+" Mbps");if(isNum(r.obstrPct))p.push("Obstruction "+n(r.obstrPct,1)+"%");if(r.dish)p.push("Dish "+r.dish.toLowerCase());}
+  if(r.fwUpd)p.push("Firmware "+r.fwUpd.toLowerCase());if(r.antenna)p.push("Antenna "+r.antenna);if(r.batt)p.push("Battery "+r.batt.toLowerCase());
+  return p.join(" · ");}
+
+/* ---------- schemas for the entry dialog ---------- */
+const DONE3=[["Done","Done"],["Not done","Not done"],["N/A","N/A"]];
+const catOf=v=>(asset(v.asset)||{}).cat;
+const assetOpts=kind=>()=>assetsOf(kind).map(a=>[a.id,a.name+(a.site?" — "+a.site:"")]);
+const SCHEMA={
+  assets:{title:"Equipment",fields:[
+    {k:"kind",l:"Equipment type",t:"select",req:1,opts:()=>[["generator","Generator"],["solar","Solar system"],["vehicle","Vehicle"],["it","IT / communications"]]},
+    {k:"cat",l:"IT category",t:"select",req:1,opts:()=>IT_CATS,show:v=>v.kind==="it"},
+    {k:"name",l:"Name on this board",t:"text",req:1,hint:"e.g. Generator — Office, Laptop LOG-01, VHF handheld 03"},
+    {k:"site",l:"Site",t:"select",opts:()=>SITES.map(s=>[s,s]),req:1},
+    {k:"model",l:"Make & model",t:"text"},
+    {k:"rating",l:"Rating / capacity",t:"text",hint:"As on the nameplate, with unit (kVA, kW, kWh)"},
+    {k:"serial",l:"Serial / asset tag",t:"text"},
+    {k:"plate",l:"Plate number",t:"text",show:v=>v.kind==="vehicle"},
+    {k:"tankL",l:"Fuel tank capacity (L)",t:"num",show:v=>v.kind==="generator"},
+    {k:"serviceHours",l:"Service interval (running hours)",t:"num",show:v=>v.kind==="generator",hint:"Take it from the manufacturer's manual"},
+    {k:"serviceKm",l:"Service interval (km)",t:"num",show:v=>v.kind==="vehicle"},
+    {k:"lastServiceOdo",l:"Odometer at last service (km)",t:"num",show:v=>v.kind==="vehicle"},
+    {k:"lastServiceDate",l:"Date of last service",t:"date",show:v=>v.kind==="vehicle"},
+    {k:"status",l:"Status",t:"select",req:1,opts:()=>IT_STATUS.map(x=>[x,x]),def:()=>"In service",show:v=>v.kind==="it"},
+    {k:"assigned",l:"Assigned to (person, vehicle or room)",t:"text",show:v=>v.kind==="it"},
+    {k:"renewDate",l:"Subscription / airtime renewal date",t:"date",show:v=>v.kind==="it"&&(v.cat==="starlink"||v.cat==="garmin"||v.cat==="other")},
+    {k:"checkDays",l:"Preventive check every (days)",t:"num",show:v=>v.kind==="solar"||v.kind==="it",hint:"Sets when the next check falls due"},
+    {k:"notes",l:"Notes",t:"area",full:1}]},
+  genlog:{title:"Generator daily log",fields:[
+    {k:"date",l:"Date",t:"date",req:1,def:todayStr},
+    {k:"asset",l:"Generator",t:"select",req:1,opts:assetOpts("generator")},
+    {k:"hStart",l:"Hour meter at start (h)",t:"num",step:"0.1"},
+    {k:"hEnd",l:"Hour meter at end (h)",t:"num",step:"0.1"},
+    {k:"fuelL",l:"Diesel added (L)",t:"num",step:"0.1"},
+    {k:"levelPct",l:"Tank level end of day (%)",t:"num"},
+    {k:"by",l:"Operator / recorded by",t:"text"},
+    {k:"notes",l:"Notes / faults observed",t:"area",full:1}],
+   check:v=>{if(isNum(v.hStart)&&isNum(v.hEnd)&&v.hEnd<v.hStart)return"The end reading is lower than the start reading.";if(isNum(v.levelPct)&&(v.levelPct<0||v.levelPct>100))return"Tank level must be between 0 and 100%.";}},
+  genmaint:{title:"Generator maintenance",fields:[
+    {k:"date",l:"Date",t:"date",req:1,def:todayStr},
+    {k:"asset",l:"Generator",t:"select",req:1,opts:assetOpts("generator")},
+    {k:"type",l:"Work done",t:"select",req:1,opts:()=>GEN_MAINT_TYPES.map(x=>[x,x])},
+    {k:"hours",l:"Hour meter at service (h)",t:"num",step:"0.1",hint:"Needed to calculate the next service"},
+    {k:"part",l:"Spare part used (from stock)",t:"select",opts:()=>S.spares.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(p=>[p.id,p.name+(p.partNo?" ("+p.partNo+")":"")])},
+    {k:"partQty",l:"Quantity used",t:"num",step:"0.01",show:v=>!!v.part,hint:"Deducted from spare-part stock automatically"},
+    {k:"by",l:"Technician",t:"text"},
+    {k:"ref",l:"Reference (job card, PO, invoice)",t:"text"},
+    {k:"notes",l:"Findings / notes",t:"area",full:1}],
+   check:v=>{if(v.part&&!(isNum(v.partQty)&&v.partQty>0))return"Enter the quantity of the spare part used.";}},
+  spares:{title:"Spare part",fields:[
+    {k:"name",l:"Part name",t:"text",req:1,hint:"e.g. Oil filter"},
+    {k:"partNo",l:"Part number",t:"text"},
+    {k:"forAsset",l:"Used on",t:"select",opts:()=>[["all-gen","All generators"],...assetsOf("generator").map(a=>[a.id,a.name]),...assetsOf("vehicle").map(a=>[a.id,a.name]),...assetsOf("solar").map(a=>[a.id,a.name]),...assetsOf("it").map(a=>[a.id,a.name])]},
+    {k:"unit",l:"Unit",t:"text",req:1,hint:"pcs, L, set…"},
+    {k:"minQty",l:"Minimum stock (reorder level)",t:"num",step:"0.01"},
+    {k:"location",l:"Storage location",t:"text"},
+    {k:"notes",l:"Notes",t:"area",full:1}]},
+  sparemov:{title:"Stock movement",fields:[
+    {k:"date",l:"Date",t:"date",req:1,def:todayStr},
+    {k:"part",l:"Spare part",t:"select",req:1,opts:()=>S.spares.slice().sort((a,b)=>a.name.localeCompare(b.name)).map(p=>[p.id,p.name])},
+    {k:"dir",l:"Movement",t:"select",req:1,opts:()=>[["IN","IN — received"],["OUT","OUT — issued / used"]]},
+    {k:"qty",l:"Quantity",t:"num",req:1,step:"0.01"},
+    {k:"ref",l:"Reference (GRN, PO, waybill, job card)",t:"text"},
+    {k:"by",l:"Recorded by",t:"text"},
+    {k:"notes",l:"Notes",t:"area",full:1}],
+   check:v=>{if(!(v.qty>0))return"Quantity must be greater than zero.";}},
+  solar:{title:"Solar preventive check",fields:[
+    {k:"date",l:"Date",t:"date",req:1,def:todayStr},
+    {k:"asset",l:"Solar system",t:"select",req:1,opts:assetOpts("solar")},
+    {k:"panels",l:"Panel cleaning",t:"select",opts:()=>[["Cleaned","Cleaned"],["Not needed","Not needed"],["Not done","Not done"]]},
+    ...SOLAR_CHECKS.map(([k,l])=>({k,l,t:"select",opts:()=>OKISSUE.map(x=>[x,x])})),
+    {k:"battV",l:"Battery bank voltage (V)",t:"num",step:"0.01"},
+    {k:"socPct",l:"Battery state of charge (%)",t:"num"},
+    {k:"invCode",l:"Inverter alarm / error code",t:"text"},
+    {k:"by",l:"Checked by",t:"text"},
+    {k:"notes",l:"Findings / action taken",t:"area",full:1}],
+   check:v=>{if(isNum(v.socPct)&&(v.socPct<0||v.socPct>100))return"State of charge must be between 0 and 100%.";}},
+  vehlog:{title:"Vehicle daily log",fields:[
+    {k:"date",l:"Date",t:"date",req:1,def:todayStr},
+    {k:"asset",l:"Vehicle",t:"select",req:1,opts:assetOpts("vehicle")},
+    {k:"driver",l:"Driver",t:"text"},
+    {k:"odoStart",l:"Odometer at start (km)",t:"num",req:1},
+    {k:"odoEnd",l:"Odometer at end (km)",t:"num",req:1},
+    {k:"purpose",l:"Main purpose",t:"select",opts:()=>PURPOSES.map(x=>[x,x])},
+    {k:"visits",l:"Places visited / route",t:"area",full:1,hint:"List the stops in order"},
+    {k:"pax",l:"Passengers",t:"num"},
+    {k:"fuelL",l:"Fuel added (L)",t:"num",step:"0.1"},
+    {k:"notes",l:"Defects / remarks",t:"area",full:1}],
+   check:v=>{if(isNum(v.odoStart)&&isNum(v.odoEnd)&&v.odoEnd<v.odoStart)return"End odometer is lower than start odometer.";}},
+  itlog:{title:"IT & comms maintenance / check",fields:[
+    {k:"date",l:"Date",t:"date",req:1,def:todayStr},
+    {k:"asset",l:"Equipment",t:"select",req:1,opts:()=>assetsOf("it").map(a=>[a.id,a.name+" — "+catName(a.cat)])},
+    {k:"work",l:"Work done",t:"select",req:1,opts:()=>IT_WORK.map(x=>[x,x])},
+    {k:"result",l:"Result",t:"select",req:1,opts:()=>[["OK","OK — working normally"],["Issue","Issue found"],["Not working","Not working"]]},
+    {k:"osUpd",l:"OS / software updates",t:"select",opts:()=>DONE3,show:v=>catOf(v)==="computer"},
+    {k:"avUpd",l:"Antivirus updated & scan",t:"select",opts:()=>DONE3,show:v=>catOf(v)==="computer"},
+    {k:"backup",l:"Data backup",t:"select",opts:()=>DONE3,show:v=>catOf(v)==="computer"},
+    {k:"diskFreePct",l:"Disk free space (%)",t:"num",show:v=>catOf(v)==="computer"},
+    {k:"fwUpd",l:"Firmware",t:"select",opts:()=>[["Updated","Updated"],["Up to date","Already up to date"],["Not checked","Not checked"]],show:v=>["garmin","vhf","starlink","other"].includes(catOf(v))},
+    {k:"wpUpd",l:"Waypoints / maps loaded",t:"select",opts:()=>[["Updated","Updated"],["Checked OK","Checked OK"],["Not done","Not done"]],show:v=>catOf(v)==="garmin"},
+    {k:"testCall",l:"Test call / radio check",t:"select",opts:()=>[["Clear","Clear"],["Weak","Weak / broken"],["Failed","Failed"]],show:v=>catOf(v)==="vhf"},
+    {k:"chan",l:"Channel programming",t:"select",opts:()=>[["Checked OK","Checked OK"],["Reprogrammed","Reprogrammed"],["Issue","Issue"]],show:v=>catOf(v)==="vhf"},
+    {k:"antenna",l:"Antenna, cable & connectors",t:"select",opts:()=>OKISSUE.map(x=>[x,x]),show:v=>["vhf","starlink","other"].includes(catOf(v))},
+    {k:"batt",l:"Battery condition",t:"select",opts:()=>[["Good","Good"],["Weak","Weak"],["Replaced","Replaced"],["N/A","N/A"]],show:v=>["computer","garmin","vhf","other"].includes(catOf(v))},
+    {k:"dlMbps",l:"Download speed (Mbps)",t:"num",step:"0.1",show:v=>catOf(v)==="starlink"},
+    {k:"ulMbps",l:"Upload speed (Mbps)",t:"num",step:"0.1",show:v=>catOf(v)==="starlink"},
+    {k:"obstrPct",l:"Obstruction shown in app (%)",t:"num",step:"0.1",show:v=>catOf(v)==="starlink"},
+    {k:"dish",l:"Dish cleaning & mounting",t:"select",opts:()=>[["Cleaned / secure","Cleaned / secure"],["Not needed","Not needed"],["Issue","Issue"]],show:v=>catOf(v)==="starlink"},
+    {k:"by",l:"Done by",t:"text"},
+    {k:"ref",l:"Reference (ticket, job card, invoice)",t:"text"},
+    {k:"notes",l:"Findings / action taken",t:"area",full:1}],
+   check:v=>{for(const k of ["diskFreePct","obstrPct"])if(isNum(v[k])&&(v[k]<0||v[k]>100))return"Percentages must be between 0 and 100.";if((isNum(v.dlMbps)&&v.dlMbps<0)||(isNum(v.ulMbps)&&v.ulMbps<0))return"Speeds cannot be negative.";}},
+  pr:{title:"Purchase request (PR)",fields:[
+    {k:"prNo",l:"PR number",t:"text",req:1},
+    {k:"date",l:"PR date",t:"date",req:1,def:todayStr},
+    {k:"requester",l:"Requested by",t:"text",req:1},
+    {k:"site",l:"For site",t:"select",req:1,opts:()=>[...SITES,"Mission-wide"].map(s=>[s,s])},
+    {k:"description",l:"Description of goods / services",t:"area",req:1,full:1},
+    {k:"category",l:"Category",t:"select",req:1,opts:()=>PR_CATS.map(x=>[x,x])},
+    {k:"budgetLine",l:"Budget line / code",t:"text"},
+    {k:"estCost",l:"Estimated value",t:"num",step:"0.01"},
+    {k:"currency",l:"Currency",t:"select",opts:()=>CURR.map(x=>[x,x]),def:()=>"USD"},
+    {k:"needBy",l:"Required by",t:"date"},
+    {k:"priority",l:"Priority",t:"select",opts:()=>PRIOS.map(x=>[x,x]),def:()=>"Medium"},
+    {k:"status",l:"Current stage",t:"select",req:1,opts:()=>PR_STAGES.map(x=>[x,x]),def:()=>"Submitted"},
+    {k:"approvedBy",l:"Approved by",t:"text",show:reach(2)},
+    {k:"approvedDate",l:"Approval date",t:"date",show:reach(2)},
+    {k:"quotes",l:"Quotations received (number)",t:"num",show:reach(3)},
+    {k:"cba",l:"Comparative bid analysis (CBA)",t:"select",opts:()=>[["Done","Done"],["Not required","Not required (below threshold)"],["Pending","Pending"]],show:reach(3)},
+    {k:"supplier",l:"Selected supplier",t:"text",show:reach(3)},
+    {k:"poNo",l:"PO number",t:"text",show:reach(4)},
+    {k:"poDate",l:"PO date",t:"date",show:reach(4)},
+    {k:"poValue",l:"PO value (same currency as above)",t:"num",step:"0.01",show:reach(4)},
+    {k:"grnNo",l:"GRN number",t:"text",show:reach(5)},
+    {k:"grnDate",l:"Delivery / GRN date",t:"date",show:reach(5)},
+    {k:"invoiceNo",l:"Invoice number",t:"text",show:reach(7)},
+    {k:"invoiceDate",l:"Invoice date",t:"date",show:reach(7)},
+    {k:"paidDate",l:"Payment date",t:"date",show:reach(8)},
+    {k:"notes",l:"Notes / reason for rejection or cancellation",t:"area",full:1}],
+   check:v=>{if(S.pr.some(x=>x.prNo&&v.prNo&&x.prNo.trim().toLowerCase()===v.prNo.trim().toLowerCase()&&x.id!==dlgState.id))return"PR number "+v.prNo+" already exists on this board.";
+     for(const k of ["estCost","poValue","quotes"])if(isNum(v[k])&&v[k]<0)return"Values cannot be negative.";}},
+  facility:{title:"Facility maintenance task",fields:[
+    {k:"site",l:"Site",t:"select",req:1,opts:()=>SITES.map(s=>[s,s])},
+    {k:"area",l:"Category",t:"select",req:1,opts:()=>AREAS.map(x=>[x,x])},
+    {k:"task",l:"Task / defect",t:"text",req:1,full:1},
+    {k:"location",l:"Room / location",t:"text"},
+    {k:"priority",l:"Priority",t:"select",req:1,opts:()=>PRIOS.map(x=>[x,x]),def:()=>"Medium"},
+    {k:"status",l:"Status",t:"select",req:1,opts:()=>STATUSES.map(x=>[x,x]),def:()=>"Open"},
+    {k:"date",l:"Date reported",t:"date",req:1,def:todayStr},
+    {k:"due",l:"Target date",t:"date"},
+    {k:"doneDate",l:"Date completed",t:"date",show:v=>v.status==="Done"},
+    {k:"assigned",l:"Assigned to",t:"text"},
+    {k:"cost",l:"Cost",t:"num",step:"0.01"},
+    {k:"currency",l:"Currency",t:"select",opts:()=>[["SDG","SDG"],["USD","USD"]]},
+    {k:"notes",l:"Notes",t:"area",full:1}],
+   check:v=>{if(v.status==="Done"&&!v.doneDate)return"Enter the date the task was completed.";}}
+};
+
+/* ---------- dialog ---------- */
+let dlgState=null;
+function openForm(coll,rec,preset){
+  if(!canWrite)return;
+  const sc=SCHEMA[coll];const vals=Object.assign({},rec||{},preset||{});
+  if(!rec)sc.fields.forEach(f=>{if(f.def&&vals[f.k]==null)vals[f.k]=f.def();});
+  dlgState={coll,id:rec?rec.id:null,vals,armed:false};
+  $("dlgTitle").textContent=(rec?"Edit · ":"New · ")+sc.title;
+  $("dlgDelete").hidden=!rec;$("dlgDelete").textContent="Delete record";
+  buildFields();$("dlg").showModal();
+}
+function readForm(){const sc=SCHEMA[dlgState.coll];const v=Object.assign({},dlgState.vals);
+  sc.fields.forEach(f=>{const i=$("f_"+f.k);if(!i)return;const raw=i.value.trim();
+    if(f.t==="num")v[f.k]=raw===""?null:Number(raw);else v[f.k]=raw===""?null:raw;});return v;}
+function buildFields(){
+  const sc=SCHEMA[dlgState.coll];const v=dlgState.vals;const body=$("dlgBody");body.textContent="";
+  sc.fields.forEach(f=>{
+    if(f.show&&!f.show(v))return;
+    const id="f_"+f.k;let inp;
+    if(f.t==="select"){const o=f.opts();inp=el("select",{id},el("option",{value:""},f.req?"Select…":"—"),o.map(([val,lab])=>el("option",{value:val},lab)));
+      if(v[f.k]!=null&&!o.some(x=>x[0]===v[f.k]))inp.append(el("option",{value:v[f.k]},"(no longer listed)"));
+      inp.value=v[f.k]==null?"":v[f.k];inp.addEventListener("change",()=>{dlgState.vals=readForm();if(sc.fields.some(x=>x.show))buildFields();});}
+    else if(f.t==="area"){inp=el("textarea",{id});inp.value=v[f.k]||"";}
+    else{inp=el("input",{id,type:f.t==="num"?"number":f.t==="date"?"date":"text",step:f.step||(f.t==="num"?"any":null),inputmode:f.t==="num"?"decimal":null});inp.value=v[f.k]==null?"":v[f.k];}
+    if(f.t==="select"&&!f.opts().length&&f.req){body.append(el("div",{class:"fld full"},el("label",{for:id},f.l),el("div",{class:"err"},"Nothing registered yet. Add it in the equipment register or spare-parts catalogue first.")));return;}
+    body.append(el("div",{class:"fld"+(f.full?" full":"")},el("label",{for:id},f.l,f.req?el("i",null," *"):null),inp,f.hint?el("div",{class:"hint"},f.hint):null));
+  });
+  body.append(el("div",{class:"err",id:"dlgErr",role:"alert"}));
+}
+$("dlgClose").onclick=$("dlgCancel").onclick=()=>$("dlg").close();
+$("dlgForm").addEventListener("submit",async e=>{
+  e.preventDefault();const sc=SCHEMA[dlgState.coll];const v=readForm();
+  for(const f of sc.fields){if(f.show&&!f.show(v)){v[f.k]=null;continue;}if(f.req&&(v[f.k]==null||v[f.k]===""||(f.t==="num"&&!isNum(v[f.k])))){$("dlgErr").textContent="Fill in “"+f.l+"”.";return;}if(f.t==="num"&&v[f.k]!=null&&!isNum(v[f.k])){$("dlgErr").textContent="“"+f.l+"” must be a number.";return;}}
+  const msg=sc.check&&sc.check(v);if(msg){$("dlgErr").textContent=msg;return;}
+  const clean={};sc.fields.forEach(f=>{if(v[f.k]!=null)clean[f.k]=v[f.k];});
+  clean.created=(dlgState.vals.created)||Date.now();clean.updated=Date.now();
+  $("dlgSave").disabled=true;
+  try{
+    const ref=dlgState.id?db.collection(dlgState.coll).doc(dlgState.id):db.collection(dlgState.coll).doc();
+    await ref.set(clean);
+    if(dlgState.coll==="genmaint")await syncMaintMove(ref.id,clean);
+    $("dlg").close();toast(dlgState.id?"Record updated":"Record saved");
+  }catch(err){$("dlgErr").textContent=errText(err);}
+  finally{$("dlgSave").disabled=false;}
+});
+$("dlgDelete").addEventListener("click",async()=>{
+  const b=$("dlgDelete");if(!dlgState.armed){dlgState.armed=true;b.textContent="Click again to confirm delete";return;}
+  b.disabled=true;
+  try{
+    if(dlgState.coll==="spares"&&S.sparemov.some(m=>m.part===dlgState.id)){$("dlgErr").textContent="This part has stock movements. Delete those first, or keep the part with minimum stock 0.";return;}
+    if(dlgState.coll==="assets"&&[...S.genlog,...S.genmaint,...S.solar,...S.vehlog,...S.itlog].some(r=>r.asset===dlgState.id)){$("dlgErr").textContent="This equipment has records in the logbooks. It cannot be deleted while those records exist.";return;}
+    await db.collection(dlgState.coll).doc(dlgState.id).delete();
+    if(dlgState.coll==="genmaint")await db.collection("sparemov").doc("gm-"+dlgState.id).delete();
+    $("dlg").close();toast("Record deleted");
+  }catch(err){$("dlgErr").textContent=errText(err);}
+  finally{b.disabled=false;}
+});
+async function syncMaintMove(mid,m){
+  const ref=db.collection("sparemov").doc("gm-"+mid);
+  if(m.part&&isNum(m.partQty)&&m.partQty>0){await ref.set({date:m.date,part:m.part,dir:"OUT",qty:m.partQty,ref:"Maintenance: "+m.type+" — "+aName(m.asset)+(m.ref?" ("+m.ref+")":""),by:m.by||null,auto:true,created:m.created,updated:Date.now()});}
+  else{await ref.delete();}
+}
+function errText(e){const c=e&&e.code;if(c==="invalid_argument")return"Your access level does not allow saving here, or the record is invalid.";if(c==="quota_exceeded")return"The board's storage is full. Export and archive older months, then delete them.";if(c==="unavailable")return"Connection problem. Check the internet link and try again.";return"Could not save: "+((e&&e.message)||"unknown error");}
+
+/* ---------- CSV export ---------- */
+function csvCell(v){if(v==null)return"";const s=String(v);return /[",\n;]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}
+async function exportCsv(name,cols,rows){
+  if(!downloads){toast("File download is not available in this view");return;}
+  const lines=[cols.map(c=>csvCell(c[0])).join(","),...rows.map(r=>cols.map(c=>csvCell(c[1](r))).join(","))];
+  try{await downloads.save({filename:name+"_"+curMonth()+".csv",data:"﻿"+lines.join("\r\n")});toast("CSV ready");}
+  catch(e){if(e&&e.code!=="declined")toast("Download failed: "+(e.message||e.code));}
+}
+function exportBtn(fn){return downloads?el("button",{class:"btn",type:"button",onclick:fn},"Export month CSV"):null;}
+
+/* ---------- views ---------- */
+function vOverview(){
+  const m=curMonth(),t=todayStr(),root=el("div");
+  const gens=assetsOf("generator"),sols=assetsOf("solar"),vehs=assetsOf("vehicle");
+  const gc=gens.map(a=>genCalc(a.id,m)),sc=sols.map(a=>solarCalc(a.id,m)),vc=vehs.map(a=>vehCalc(a.id,m));
+  const lowParts=S.spares.filter(p=>isNum(p.minQty)&&partStock(p.id)<=p.minQty);
+  const itc=assetsOf("it").map(a=>itCalc(a.id));
+  const prOpenL=S.pr.filter(prOpen),prLate=S.pr.filter(r=>prFlags(r).late),prDocs=S.pr.filter(r=>prFlags(r).docs.length);
+  const facOpen=S.facility.filter(r=>r.status!=="Done");
+  const facDoneM=S.facility.filter(r=>r.status==="Done"&&inMonth(r,m,"doneDate"));
+  const genMaintM=S.genmaint.filter(r=>inMonth(r,m)).length,solarM=S.solar.filter(r=>inMonth(r,m)).length;
+
+  root.append(el("section",{class:"sec"},
+    el("div",{class:"sec-head"},el("div",null,el("h2",null,monthLabel(m)),el("p",null,"Totals are calculated only from the entries in this board. A blank figure means nothing was recorded, not zero."))),
+    el("div",{class:"tiles"},
+      tile("Generator diesel added",n(sum(gc,c=>c.fuel),0),"L",gc.map(c=>c.a.site+": "+n(c.fuel)+" L").join(" · ")||"No generator registered"),
+      tile("Generator running hours",n(sum(gc,c=>c.hours),1),"h",gc.map(c=>c.a.site+": "+n(c.hours,1)+" h").join(" · ")||"—"),
+      tile("Vehicle distance",n(sum(vc,c=>c.kmM)),"km",vc.length?vc.length+" vehicle"+(vc.length>1?"s":"")+" · "+sum(vc,c=>c.ml.length)+" daily logs":"No vehicle registered"),
+      tile("Maintenance done",String(genMaintM+solarM+facDoneM.length),"",genMaintM+" generator · "+solarM+" solar · "+facDoneM.length+" facilities"),
+      tile("Open facility tasks",String(facOpen.length),"",facOpen.filter(r=>r.priority==="High").length+" high priority"),
+      tile("Spare parts at or below minimum",String(lowParts.length),"",S.spares.length+" parts in catalogue"),
+      tile("Open purchase requests",String(prOpenL.length),"",S.pr.filter(r=>inMonth(r,m)).length+" raised · "+S.pr.filter(r=>inMonth(r,m,"poDate")).length+" POs · "+S.pr.filter(r=>inMonth(r,m,"grnDate")).length+" delivered in month"),
+      tile("IT & comms needing attention",String(itc.filter(x=>x.state==="bad"||x.state==="warn").length),"",itc.filter(x=>x.st==="In service").length+" of "+itc.filter(x=>x.st!=="Disposed").length+" items in service · "+S.itlog.filter(r=>inMonth(r,m)).length+" checks this month"))));
+
+  // action board
+  const acts=[];
+  gc.forEach(c=>{if(c.state==="bad"||c.state==="warn")acts.push([c.state,c.a.name+": "+c.stateTxt,"Current meter "+n(c.meter,1)+" h · due at "+n(c.due,1)+" h",c.a.site,"generators"]);
+    else if(c.state==="nodata")acts.push(["info",c.a.name+": "+c.stateTxt,"Complete the register and log the last oil change to enable service alerts",c.a.site,"registry"]);
+    if(!c.lastLog)acts.push(["warn",c.a.name+": no daily log yet","Start the daily hour-meter and fuel log",c.a.site,"generators"]);
+    else{const d=diffDays(c.lastLog.date,t);if(d>1)acts.push(["warn",c.a.name+": no log for "+d+" days","Last entry "+fmtDate(c.lastLog.date),c.a.site,"generators"]);}
+    const g=Object.keys(c.gaps).filter(id=>inMonth(c.logs.find(r=>r.id===id)||{},m));if(g.length)acts.push(["warn",c.a.name+": "+g.length+" hour-meter break"+(g.length>1?"s":"")+" this month","Start reading does not match previous end reading — verify",c.a.site,"generators"]);});
+  sc.forEach(c=>{if(c.state!=="ok")acts.push([c.state==="nodata"?"info":c.state,c.a.name+": "+c.txt,c.last?"Last check "+fmtDate(c.last.date):"Record the first preventive check",c.a.site,c.state==="nodata"&&c.last?"registry":"solar"]);});
+  vc.forEach(c=>{if(c.state==="bad"||c.state==="warn")acts.push([c.state,c.a.name+": "+c.txt,"Odometer "+n(c.odo)+" km",c.a.site,"vehicles"]);
+    const g=Object.keys(c.gaps).filter(id=>inMonth(c.logs.find(r=>r.id===id)||{},m));if(g.length)acts.push(["bad",c.a.name+": "+g.length+" odometer gap"+(g.length>1?"s":"")+" this month","Kilometres not covered by any log — investigate",c.a.site,"vehicles"]);});
+  lowParts.forEach(p=>acts.push([partStock(p.id)<=0?"bad":"warn","Reorder "+p.name,"Stock "+n(partStock(p.id),2).replace(/\.00$/,"")+" "+(p.unit||"")+" · minimum "+n(p.minQty,2).replace(/\.00$/,""),p.location||"Store","generators"]));
+  prLate.forEach(r=>acts.push(["bad","PR "+r.prNo+" past required date ("+fmtDate(r.needBy)+")",r.description+" · stage: "+r.status,r.site||"Procurement","procurement"]));
+  if(prDocs.length)acts.push(["warn",prDocs.length+" PR"+(prDocs.length>1?"s":"")+" with missing documents or wrong date order","PR "+prDocs.slice(0,6).map(r=>r.prNo).join(", ")+(prDocs.length>6?"…":""),"Procurement","procurement"]);
+  itc.forEach(x=>{if(x.state==="bad"||x.state==="warn")acts.push([x.state,x.a.name+": "+x.txt,catName(x.a.cat)+(x.a.assigned?" · "+x.a.assigned:""),x.a.site,"it"]);
+    if(x.renew&&x.renew[0]!=="ok")acts.push([x.renew[0],x.a.name+": "+x.renew[1],"Subscription / airtime — confirm payment before the service stops",x.a.site,"it"]);});
+  facOpen.forEach(r=>{const late=r.due&&r.due<t;if(r.priority==="High"||late)acts.push([late?"bad":"warn",r.task,(late?"Past target date "+fmtDate(r.due):"High priority")+" · "+r.area+(r.assigned?" · "+r.assigned:""),r.site,"facilities"]);});
+  const order={bad:0,warn:1,info:2};acts.sort((a,b)=>order[a[0]]-order[b[0]]);
+  const sec=el("section",{class:"sec"},el("div",{class:"sec-head"},el("div",null,el("h2",null,"Action board"),el("p",null,"What needs attention now, worked out from the logs, the equipment register and stock levels."))));
+  if(!S.assets.length)sec.append(emptyBox("Start with the equipment register","Register the generators, solar systems and vehicles with their service intervals. Alerts appear here once records exist.",el("button",{class:"btn primary",type:"button",onclick:()=>go("registry")},"Open equipment register")));
+  else if(!acts.length)sec.append(el("div",{class:"actions"},el("div",{class:"act ok"},el("span",{class:"stripe"}),el("div",{class:"what"},el("b",null,"Nothing outstanding"),el("div",null,"All registered equipment is within service intervals and no stock or task alerts are open.")),el("span"))));
+  else sec.append(el("div",{class:"actions"},acts.map(([s,w,d,site,to])=>el("div",{class:"act "+s},el("span",{class:"stripe"}),el("div",{class:"what"},el("b",null,w),el("div",null,d)),el("button",{class:"btn small",type:"button",onclick:()=>go(to)},site+" ›")))));
+  root.append(sec);
+
+  // site matrix
+  const rows=SITES.map(site=>({site,
+    gen:gc.filter(c=>c.a.site===site),sol:sc.filter(c=>c.a.site===site),
+    open:facOpen.filter(r=>r.site===site).length,done:facDoneM.filter(r=>r.site===site).length,
+    cost:S.facility.filter(r=>r.site===site&&inMonth(r,m,"doneDate")&&r.status==="Done")}));
+  root.append(el("section",{class:"sec"},el("div",{class:"sec-head"},el("h2",null,"By site")),
+    table([
+      {h:"Site",f:r=>el("b",null,r.site)},
+      {h:"Generator",f:r=>r.gen.length?r.gen.map(c=>el("span",{style:"display:block"},pill(c.state==="nodata"?"":c.state,c.state==="ok"?"In interval":c.state==="warn"?"Service soon":c.state==="bad"?"Overdue":"No data"))):"—"},
+      {h:"Diesel (L)",num:1,f:r=>r.gen.length?n(sum(r.gen,c=>c.fuel)):"—"},
+      {h:"Run hours",num:1,f:r=>r.gen.length?n(sum(r.gen,c=>c.hours),1):"—"},
+      {h:"Solar",f:r=>r.sol.length?r.sol.map(c=>el("span",{style:"display:block"},pill(c.state==="nodata"?"":c.state,c.state==="ok"?"Checked":c.state==="warn"?"Check due":c.state==="bad"?"Attention":"No data"))):"—"},
+      {h:"Tasks open",num:1,f:r=>String(r.open)},
+      {h:"Tasks done in month",num:1,f:r=>String(r.done)},
+      {h:"Repair cost in month",num:1,f:r=>costStr(r.cost)}],rows)));
+  return root;
+}
+function costStr(rows){const by={};rows.forEach(r=>{if(isNum(r.cost)){const c=r.currency||"(no currency)";by[c]=(by[c]||0)+r.cost;}});const k=Object.keys(by);return k.length?k.map(c=>n(by[c],2)+" "+c).join(" + "):"—";}
+function tile(k,v,u,s){return el("div",{class:"tile"},el("div",{class:"k"},k),el("div",{class:"v"},v,u?el("small",null,u):null),el("div",{class:"s"},s));}
+
+function assetChips(kind,key){
+  const list=assetsOf(kind);if(list.length<2)return null;
+  return el("div",{class:"chips",role:"group","aria-label":"Filter"},[["all","All"],...list.map(a=>[a.id,a.name])].map(([id,l])=>el("button",{class:"chip",type:"button","aria-pressed":String(filt[key]===id),onclick:()=>{filt[key]=id;render();}},l)));
+}
+
+function vGenerators(){
+  const m=curMonth(),root=el("div"),gens=assetsOf("generator");
+  root.append(el("section",{class:"sec"},el("div",{class:"sec-head"},el("div",null,el("h2",null,"Generators"),el("p",null,"Daily hour-meter and diesel log, service status and maintenance history.")),
+    el("div",{class:"chips"},addBtn("Daily log",()=>openForm("genlog")),addBtn("Maintenance",()=>openForm("genmaint"))))));
+  if(!gens.length){root.append(emptyBox("No generator registered","Add the Office and MERU Clinic generators in the equipment register first.",el("button",{class:"btn primary",type:"button",onclick:()=>go("registry")},"Open equipment register")));root.append(el("div",{style:"margin-top:28px"},vSpares()));return root;}
+  const sel=gens.filter(a=>filt.gen==="all"||a.id===filt.gen);
+  root.append(el("div",{class:"cards"},gens.map(a=>{const c=genCalc(a.id,m);const pct=c.due!=null&&isNum(a.serviceHours)&&c.meter!=null?Math.min(100,Math.max(0,(1-(c.remain/a.serviceHours))*100)):null;
+    return el("div",{class:"card"},el("div",{class:"ttl"},el("b",null,a.name),pill(c.state==="nodata"?"":c.state,c.state==="ok"?"OK":c.state==="warn"?"Due soon":c.state==="bad"?"Overdue":"No data")),
+      el("div",{class:"meta"},[a.site,a.model,a.rating].filter(Boolean).join(" · ")),
+      pct!=null?el("div",null,el("div",{class:"meter"},el("i",{class:c.state,style:"width:"+pct.toFixed(1)+"%"})),el("div",{class:"meta",style:"margin-top:4px"},c.stateTxt)):el("div",{class:"meta"},c.stateTxt),
+      el("dl",{class:"kv"},
+        el("dt",null,"Hour meter (latest)"),el("dd",null,n(c.meter,1)+" h"),
+        el("dt",null,"Last oil change / service"),el("dd",null,c.lastSvc?fmtDate(c.lastSvc.date)+" @ "+n(c.lastSvc.hours,1)+" h":"—"),
+        el("dt",null,"Running hours ("+m+")"),el("dd",null,n(c.hours,1)+" h"),
+        el("dt",null,"Diesel added ("+m+")"),el("dd",null,n(c.fuel,1)+" L"),
+        el("dt",null,"Litres per running hour"),el("dd",null,c.lph!=null?n(c.lph,2)+" L/h":"—"),
+        el("dt",null,"Days logged"),el("dd",null,new Set(c.ml.map(r=>r.date)).size+" / "+daysInMonth(m))));
+  })));
+  root.append(el("p",{class:"note"},"Litres per running hour = diesel added in the month ÷ running hours in the month. It reflects real consumption only when the tank level at the start and end of the month is similar; compare against the tank-level column before drawing conclusions about efficiency or losses."));
+  const chips=assetChips("generator","gen");if(chips)root.append(chips);
+  const dN=daysInMonth(m),labels=[...Array(dN)].map((_,i)=>fmtDate(m+"-"+pad(i+1)));
+  const hrs=Array(dN).fill(null),fuel=Array(dN).fill(null);
+  sel.forEach(a=>{const c=genCalc(a.id,m);c.ml.forEach(r=>{const i=+r.date.slice(8)-1;const h=c.runH(r);if(h!=null)hrs[i]=(hrs[i]||0)+h;if(isNum(r.fuelL))fuel[i]=(fuel[i]||0)+r.fuelL;});});
+  root.append(el("div",{class:"grid2",style:"margin:14px 0 24px"},barChart("Running hours per day","h",hrs,labels,"var(--bar)"),barChart("Diesel added per day","L",fuel,labels,"var(--bar-2)")));
+
+  const logs=sortDate(S.genlog.filter(r=>inMonth(r,m)&&sel.some(a=>a.id===r.asset))).reverse();
+  const gapMap={};sel.forEach(a=>Object.assign(gapMap,genCalc(a.id,m).gaps));
+  const rh=r=>isNum(r.hStart)&&isNum(r.hEnd)&&r.hEnd>=r.hStart?r.hEnd-r.hStart:null;
+  root.append(el("section",{class:"sec"},el("div",{class:"sec-head"},el("h3",null,"Daily log · "+monthLabel(m)),exportBtn(()=>exportCsv("generator_daily_log",[["Date",r=>r.date],["Generator",r=>aName(r.asset)],["Hour meter start",r=>r.hStart],["Hour meter end",r=>r.hEnd],["Running hours",r=>rh(r)],["Diesel added L",r=>r.fuelL],["Tank level %",r=>r.levelPct],["Operator",r=>r.by],["Notes",r=>r.notes]],sortDate(logs)))),
+    table([{h:"Date",f:r=>fmtDate(r.date)},{h:"Generator",f:r=>aName(r.asset)},{h:"Start h",num:1,f:r=>n(r.hStart,1)},{h:"End h",num:1,f:r=>n(r.hEnd,1)},{h:"Run h",num:1,f:r=>n(rh(r),1)},{h:"Diesel L",num:1,f:r=>n(r.fuelL,1)},{h:"Tank %",num:1,f:r=>n(r.levelPct)},{h:"Check",f:r=>gapMap[r.id]!=null?pill("warn","Meter break "+(gapMap[r.id]>0?"+":"")+gapMap[r.id]+" h"):pill("ok","Continuous")},{h:"Operator",f:r=>r.by},{h:"Notes",wrap:1,f:r=>r.notes},{h:"",f:r=>editBtn(()=>openForm("genlog",r))}],
+      logs,{emptyTitle:"No daily log for "+monthLabel(m),emptyBody:"Record the hour meter at start and end of each day and every refuel.",emptyBtn:addBtn("Daily log",()=>openForm("genlog")),
+      foot:["Total","","","",n(sum(logs,rh),1),n(sum(logs,r=>r.fuelL),1),"","","","",""]})));
+  const mt=sortDate(S.genmaint.filter(r=>sel.some(a=>a.id===r.asset))).reverse();
+  root.append(el("section",{class:"sec"},el("div",{class:"sec-head"},el("h3",null,"Maintenance history (all months)"),exportBtn(()=>exportCsv("generator_maintenance",[["Date",r=>r.date],["Generator",r=>aName(r.asset)],["Work done",r=>r.type],["Hour meter",r=>r.hours],["Part used",r=>r.part?(S.spares.find(p=>p.id===r.part)||{}).name:""],["Qty",r=>r.partQty],["Technician",r=>r.by],["Reference",r=>r.ref],["Notes",r=>r.notes]],sortDate(mt.filter(r=>inMonth(r,m)))))),
+    table([{h:"Date",f:r=>fmtDate(r.date)},{h:"Generator",f:r=>aName(r.asset)},{h:"Work done",f:r=>el("span",null,r.type,GEN_RESET.includes(r.type)?el("span",{class:"sub"},"Resets service counter"):null)},{h:"Meter h",num:1,f:r=>n(r.hours,1)},{h:"Part used",f:r=>r.part?((S.spares.find(p=>p.id===r.part)||{}).name||"(removed part)")+" × "+n(r.partQty,2).replace(/\.00$/,""):"—"},{h:"Technician",f:r=>r.by},{h:"Ref.",f:r=>r.ref},{h:"Notes",wrap:1,f:r=>r.notes},{h:"",f:r=>editBtn(()=>openForm("genmaint",r))}],
+      mt,{emptyTitle:"No maintenance recorded",emptyBody:"Log oil changes, filter changes, services and repairs with the hour-meter reading.",emptyBtn:addBtn("Maintenance",()=>openForm("genmaint"))})));
+  root.append(el("div",{id:"spares",style:"margin-top:34px;padding-top:18px;border-top:3px solid var(--line)"},vSpares()));
+  return root;
+}
+
+function vSpares(){
+  const m=curMonth(),root=el("div");
+  root.append(el("section",{class:"sec"},el("div",{class:"sec-head"},el("div",null,el("h2",null,"Spare parts control"),el("p",null,"Stock = all IN movements − all OUT movements. Parts used in generator maintenance are deducted automatically.")),
+    el("div",{class:"chips"},addBtn("Part",()=>openForm("spares")),S.spares.length?addBtn("Stock movement",()=>openForm("sparemov")):null))));
+  const parts=S.spares.slice().sort((a,b)=>a.name.localeCompare(b.name));
+  const used=pid=>sum(S.sparemov.filter(r=>r.part===pid&&r.dir==="OUT"&&inMonth(r,m)),r=>r.qty);
+  const rec=pid=>sum(S.sparemov.filter(r=>r.part===pid&&r.dir==="IN"&&inMonth(r,m)),r=>r.qty);
+  const forName=v=>v==="all-gen"?"All generators":v?aName(v):"—";
+  const q=v=>n(v,2).replace(/\.00$/,"");
+  root.append(el("section",{class:"sec"},el("div",{class:"sec-head"},el("h3",null,"Stock position"),exportBtn(()=>exportCsv("spare_parts_stock",[["Part",r=>r.name],["Part no",r=>r.partNo],["Used on",r=>forName(r.forAsset)],["Unit",r=>r.unit],["Received in month",r=>rec(r.id)],["Issued in month",r=>used(r.id)],["Stock now",r=>partStock(r.id)],["Minimum",r=>r.minQty],["Location",r=>r.location]],parts))),
+    table([{h:"Part",f:r=>el("span",null,el("b",null,r.name),r.partNo?el("span",{class:"sub"},r.partNo):null)},{h:"Used on",f:r=>forName(r.forAsset)},{h:"Received ("+m+")",num:1,f:r=>q(rec(r.id))},{h:"Issued ("+m+")",num:1,f:r=>q(used(r.id))},{h:"Stock now",num:1,f:r=>el("b",null,q(partStock(r.id))+" "+(r.unit||""))},{h:"Minimum",num:1,f:r=>isNum(r.minQty)?q(r.minQty):"—"},
+      {h:"Status",f:r=>{const s=partStock(r.id);if(s<0)return pill("bad","Negative — check records");if(!isNum(r.minQty))return pill("","No minimum set");if(s<=0)return pill("bad","Out of stock");if(s<=r.minQty)return pill("warn","Reorder");return pill("ok","OK");}},{h:"Location",f:r=>r.location},{h:"",f:r=>editBtn(()=>openForm("spares",r))}],
+      parts,{emptyTitle:"Catalogue is empty",emptyBody:"Add each spare part kept in stock (oil, oil filters, fuel filters, air filters, belts…) with its minimum level.",emptyBtn:addBtn("Part",()=>openForm("spares"))})));
+  const mv=sortDate(S.sparemov.filter(r=>inMonth(r,m))).reverse();
+  root.append(el("section",{class:"sec"},el("div",{class:"sec-head"},el("h3",null,"Movements · "+monthLabel(m)),exportBtn(()=>exportCsv("spare_parts_movements",[["Date",r=>r.date],["Part",r=>(S.spares.find(p=>p.id===r.part)||{}).name],["Movement",r=>r.dir],["Qty",r=>r.qty],["Reference",r=>r.ref],["By",r=>r.by],["Notes",r=>r.notes]],sortDate(mv)))),
+    table([{h:"Date",f:r=>fmtDate(r.date)},{h:"Part",f:r=>(S.spares.find(p=>p.id===r.part)||{}).name||"(removed part)"},{h:"Movement",f:r=>pill(r.dir==="IN"?"ok":"",r.dir==="IN"?"IN":"OUT")},{h:"Qty",num:1,f:r=>q(r.qty)},{h:"Reference",wrap:1,f:r=>r.ref},{h:"By",f:r=>r.by},{h:"",f:r=>r.auto?el("span",{class:"sub"},"From maintenance"):editBtn(()=>openForm("sparemov",r))}],
+      mv,{emptyTitle:"No movements in "+monthLabel(m),emptyBody:"Record receipts (with GRN/PO) and issues. Opening stock is entered as an IN movement."})));
+  return root;
+}
+
+function vSolar(){
+  const m=curMonth(),root=el("div"),sols=assetsOf("solar");
+  root.append(el("section",{class:"sec"},el("div",{class:"sec-head"},el("div",null,el("h2",null,"Solar systems"),el("p",null,"Preventive maintenance checklist for the Office and MERU Clinic solar installations.")),addBtn("Preventive check",()=>openForm("solar")))));
+  if(!sols.length){root.append(emptyBox("No solar system registered","Add the solar systems in the equipment register with their check interval.",el("button",{class:"btn primary",type:"button",onclick:()=>go("registry")},"Open equipment register")));return root;}
+  root.append(el("div",{class:"cards"},sols.map(a=>{const c=solarCalc(a.id,m);const L=c.last;
+    return el("div",{class:"card"},el("div",{class:"ttl"},el("b",null,a.name),pill(c.state==="nodata"?"":c.state,c.state==="ok"?"OK":c.state==="warn"?"Due":c.state==="bad"?"Attention":"No data")),
+      el("div",{class:"meta"},[a.site,a.rating,isNum(a.checkDays)?"check every "+a.checkDays+" days":null].filter(Boolean).join(" · ")),
+      el("div",{class:"meta"},c.txt),
+      L?el("dl",{class:"kv"},el("dt",null,"Last check"),el("dd",null,fmtDate(L.date)),el("dt",null,"Battery voltage"),el("dd",null,isNum(L.battV)?n(L.battV,2)+" V":"—"),el("dt",null,"State of charge"),el("dd",null,isNum(L.socPct)?n(L.socPct)+" %":"—"),el("dt",null,"Panels"),el("dd",null,L.panels||"—"),el("dt",null,"Checks this month"),el("dd",null,String(c.mc.length))):null);})));
+  const rows=sortDate(S.solar.filter(r=>inMonth(r,m))).reverse();
+  const res=r=>SOLAR_CHECKS.some(([k])=>r[k]==="Issue")?"Issue":"OK";
+  root.append(el("section",{class:"sec",style:"margin-top:20px"},el("div",{class:"sec-head"},el("h3",null,"Checklist record · "+monthLabel(m)),exportBtn(()=>exportCsv("solar_checks",[["Date",r=>r.date],["System",r=>aName(r.asset)],["Panel cleaning",r=>r.panels],...SOLAR_CHECKS.map(([k,l])=>[l,r=>r[k]]),["Battery V",r=>r.battV],["SoC %",r=>r.socPct],["Inverter code",r=>r.invCode],["Result",res],["Checked by",r=>r.by],["Findings",r=>r.notes]],sortDate(rows)))),
+    table([{h:"Date",f:r=>fmtDate(r.date)},{h:"System",f:r=>aName(r.asset)},{h:"Panels",f:r=>r.panels},...SOLAR_CHECKS.map(([k,l])=>({h:l.split(/[ ,\/&]/)[0],f:r=>r[k]?pill(r[k]==="OK"?"ok":r[k]==="Issue"?"bad":"",r[k]):"—"})),{h:"Batt V",num:1,f:r=>n(r.battV,2)},{h:"SoC %",num:1,f:r=>n(r.socPct)},{h:"Inverter code",f:r=>r.invCode},{h:"By",f:r=>r.by},{h:"Findings",wrap:1,f:r=>r.notes},{h:"",f:r=>editBtn(()=>openForm("solar",r))}],
+      rows,{emptyTitle:"No check recorded in "+monthLabel(m),emptyBody:"Each check covers panels, cabling, inverter, batteries, protection and ventilation.",emptyBtn:addBtn("Preventive check",()=>openForm("solar"))})));
+  return root;
+}
+
+function vVehicles(){
+  const m=curMonth(),root=el("div"),vehs=assetsOf("vehicle");
+  root.append(el("section",{class:"sec"},el("div",{class:"sec-head"},el("div",null,el("h2",null,"Vehicles"),el("p",null,"Daily odometer, places visited, fuel and service status.")),addBtn("Daily trip log",()=>openForm("vehlog")))));
+  if(!vehs.length){root.append(emptyBox("No vehicle registered","Add each vehicle with plate, service interval and odometer at last service.",el("button",{class:"btn primary",type:"button",onclick:()=>go("registry")},"Open equipment register")));return root;}
+  root.append(el("div",{class:"cards"},vehs.map(a=>{const c=vehCalc(a.id,m);
+    return el("div",{class:"card"},el("div",{class:"ttl"},el("b",null,a.name),pill(c.state==="nodata"?"":c.state,c.state==="ok"?"OK":c.state==="warn"?"Service soon":c.state==="bad"?"Overdue":"No data")),
+      el("div",{class:"meta"},[a.plate,a.model,a.site].filter(Boolean).join(" · ")),el("div",{class:"meta"},c.txt),
+      el("dl",{class:"kv"},el("dt",null,"Odometer (latest)"),el("dd",null,n(c.odo)+" km"),el("dt",null,"Distance ("+m+")"),el("dd",null,n(c.kmM)+" km"),el("dt",null,"Days used"),el("dd",null,c.days+" / "+daysInMonth(m)),el("dt",null,"Fuel added ("+m+")"),el("dd",null,n(c.fuelM,1)+" L"),el("dt",null,"L/100 km (fuel added ÷ km)"),el("dd",null,c.l100!=null?n(c.l100,1):"—"),el("dt",null,"Odometer gaps this month"),el("dd",null,String(Object.keys(c.gaps).filter(id=>c.ml.some(r=>r.id===id)).length))));})));
+  root.append(el("p",{class:"note",style:"margin-top:12px"},"L/100 km = fuel added in the month ÷ km driven × 100. It is only meaningful when every refuel is logged and the tank is filled to the same level; treat a single month as indicative. An odometer gap means the start reading of a trip differs from the end reading of the previous trip for that vehicle."));
+  const chips=assetChips("vehicle","veh");if(chips)root.append(chips);
+  const sel=vehs.filter(a=>filt.veh==="all"||a.id===filt.veh);
+  const dN=daysInMonth(m),labels=[...Array(dN)].map((_,i)=>fmtDate(m+"-"+pad(i+1)));const km=Array(dN).fill(null);
+  const gapMap={};sel.forEach(a=>{const c=vehCalc(a.id,m);Object.assign(gapMap,c.gaps);c.ml.forEach(r=>{const k=c.km(r);if(k!=null){const i=+r.date.slice(8)-1;km[i]=(km[i]||0)+k;}});});
+  root.append(el("div",{style:"margin:14px 0 24px"},barChart("Kilometres per day","km",km,labels,"var(--bar)")));
+  const rows=sortDate(S.vehlog.filter(r=>inMonth(r,m)&&sel.some(a=>a.id===r.asset))).reverse();
+  const kmf=r=>isNum(r.odoStart)&&isNum(r.odoEnd)&&r.odoEnd>=r.odoStart?r.odoEnd-r.odoStart:null;
+  root.append(el("section",{class:"sec"},el("div",{class:"sec-head"},el("h3",null,"Trip log · "+monthLabel(m)),exportBtn(()=>exportCsv("vehicle_log",[["Date",r=>r.date],["Vehicle",r=>aName(r.asset)],["Plate",r=>(asset(r.asset)||{}).plate],["Driver",r=>r.driver],["Odometer start",r=>r.odoStart],["Odometer end",r=>r.odoEnd],["Km",kmf],["Purpose",r=>r.purpose],["Places visited",r=>r.visits],["Passengers",r=>r.pax],["Fuel added L",r=>r.fuelL],["Odometer gap km",r=>gapMap[r.id]],["Remarks",r=>r.notes]],sortDate(rows)))),
+    table([{h:"Date",f:r=>fmtDate(r.date)},{h:"Vehicle",f:r=>aName(r.asset)},{h:"Driver",f:r=>r.driver},{h:"Start km",num:1,f:r=>n(r.odoStart)},{h:"End km",num:1,f:r=>n(r.odoEnd)},{h:"Km",num:1,f:r=>n(kmf(r))},{h:"Purpose",f:r=>r.purpose},{h:"Places visited",wrap:1,f:r=>r.visits},{h:"Fuel L",num:1,f:r=>n(r.fuelL,1)},{h:"Check",f:r=>gapMap[r.id]!=null?pill("bad","Gap "+(gapMap[r.id]>0?"+":"")+n(gapMap[r.id])+" km"):pill("ok","Continuous")},{h:"Remarks",wrap:1,f:r=>r.notes},{h:"",f:r=>editBtn(()=>openForm("vehlog",r))}],
+      rows,{emptyTitle:"No trips logged in "+monthLabel(m),emptyBody:"One line per vehicle per day: odometer start and end, places visited, fuel added.",emptyBtn:addBtn("Daily trip log",()=>openForm("vehlog")),
+      foot:["Total","","","","",n(sum(rows,kmf)),"","",n(sum(rows,r=>r.fuelL),1),"","",""]})));
+  return root;
+}
+
+function vProcurement(){
+  const m=curMonth(),t=todayStr(),root=el("div");
+  root.append(el("section",{class:"sec"},el("div",{class:"sec-head"},el("div",null,el("h2",null,"Procurement · PR control"),el("p",null,"Every purchase request from PR to payment: approval, quotations, CBA, PO, GRN, invoice. Missing documents and wrong date order are flagged automatically.")),addBtn("Purchase request",()=>openForm("pr")))));
+  const raised=S.pr.filter(r=>inMonth(r,m)),poM=S.pr.filter(r=>inMonth(r,m,"poDate")),grnM=S.pr.filter(r=>inMonth(r,m,"grnDate")),paidM=S.pr.filter(r=>inMonth(r,m,"paidDate"));
+  const open=S.pr.filter(prOpen),late=S.pr.filter(r=>prFlags(r).late),flagged=S.pr.filter(r=>prFlags(r).docs.length);
+  const lPO=poM.map(r=>prLead(r).po).filter(isNum),lGRN=grnM.map(r=>prLead(r).grn).filter(isNum);
+  root.append(el("div",{class:"tiles",style:"margin-bottom:14px"},
+    tile("PRs raised in month",String(raised.length),"",sumByCur(raised,r=>r.estCost)+" estimated"),
+    tile("POs issued in month",String(poM.length),"",sumByCur(poM,r=>r.poValue)+" committed"),
+    tile("Delivered (GRN) in month",String(grnM.length),"",paidM.length+" paid in month · "+sumByCur(paidM,r=>r.poValue)),
+    tile("Open PRs (not yet delivered)",String(open.length),"",late.length+" past required date"),
+    tile("Avg. lead time PR → PO",lPO.length?n(avg(lPO),1):"—","days",lPO.length?"Based on "+lPO.length+" PO"+(lPO.length>1?"s":"")+" issued in month":"No PO with both dates this month"),
+    tile("Avg. lead time PR → delivery",lGRN.length?n(avg(lGRN),1):"—","days",lGRN.length?"Based on "+lGRN.length+" deliveries in month":"No delivery with both dates this month"),
+    tile("PRs with document gaps",String(flagged.length),"","Check the Flags column")));
+  root.append(el("h3",{style:"margin-bottom:8px"},"Pipeline · all PRs by current stage — click a stage to list its PRs"));
+  root.append(el("div",{class:"stages",style:"margin-bottom:18px"},PR_STAGES.map(s=>{const c=S.pr.filter(r=>r.status===s).length;const key="stage:"+s;
+    return el("button",{type:"button",class:"stg"+(c?" hot":""),"aria-pressed":String(filt.pr===key),onclick:()=>{filt.pr=filt.pr===key?"active":key;render();}},el("div",{class:"k"},s),el("div",{class:"v"},String(c)));})));
+  root.append(el("div",{class:"chips",style:"margin-bottom:10px"},[["active","Active (not paid or closed)"],["open","Not yet delivered"],["finance","Delivered, not paid"],["month","Activity in "+m],["flags","With flags"],["all","All PRs"]].map(([v,l])=>el("button",{class:"chip",type:"button","aria-pressed":String(filt.pr===v),onclick:()=>{filt.pr=v;render();}},l))));
+  let rows=S.pr.slice();
+  if(filt.pr.startsWith("stage:")){const s=filt.pr.slice(6);rows=rows.filter(r=>r.status===s);}
+  else if(filt.pr==="active")rows=rows.filter(r=>!prClosed(r.status)&&r.status!=="Paid");
+  else if(filt.pr==="open")rows=rows.filter(prOpen);
+  else if(filt.pr==="finance")rows=rows.filter(r=>!prClosed(r.status)&&stIdx(r.status)>=6&&r.status!=="Paid");
+  else if(filt.pr==="month")rows=rows.filter(r=>["date","approvedDate","poDate","grnDate","invoiceDate","paidDate"].some(k=>inMonth(r,m,k)));
+  else if(filt.pr==="flags")rows=rows.filter(r=>{const f=prFlags(r);return f.docs.length||f.late;});
+  const pr={High:0,Medium:1,Low:2};rows.sort((a,b)=>(prFlags(b).late-prFlags(a).late)||(pr[a.priority]??1)-(pr[b.priority]??1)||(a.date||"").localeCompare(b.date||""));
+  const prog=s=>{const i=stIdx(s);return el("div",{class:"prog","aria-hidden":"true"},[...Array(9)].map((_,k)=>el("i",{class:!prClosed(s)&&k<=i?"on":null})));};
+  const varPct=r=>isNum(r.estCost)&&r.estCost>0&&isNum(r.poValue)?(r.poValue-r.estCost)/r.estCost*100:null;
+  root.append(el("section",{class:"sec"},el("div",{class:"sec-head"},el("h3",null,rows.length+" PR"+(rows.length===1?"":"s")+(filt.pr.startsWith("stage:")?" at stage “"+filt.pr.slice(6)+"”":"")),exportBtn(()=>exportCsv("procurement_PR_tracker",[["PR no",r=>r.prNo],["PR date",r=>r.date],["Requested by",r=>r.requester],["Site",r=>r.site],["Category",r=>r.category],["Description",r=>r.description],["Budget line",r=>r.budgetLine],["Priority",r=>r.priority],["Required by",r=>r.needBy],["Estimated value",r=>r.estCost],["Currency",r=>r.currency],["Stage",r=>r.status],["Approved by",r=>r.approvedBy],["Approval date",r=>r.approvedDate],["Quotations",r=>r.quotes],["CBA",r=>r.cba],["Supplier",r=>r.supplier],["PO no",r=>r.poNo],["PO date",r=>r.poDate],["PO value",r=>r.poValue],["PO vs estimate %",r=>{const v=varPct(r);return v==null?"":v.toFixed(1);}],["GRN no",r=>r.grnNo],["GRN date",r=>r.grnDate],["Invoice no",r=>r.invoiceNo],["Invoice date",r=>r.invoiceDate],["Payment date",r=>r.paidDate],["Days PR to PO",r=>prLead(r).po],["Days PR to GRN",r=>prLead(r).grn],["Flags",r=>{const f=prFlags(r);return [...(f.late?["Past required date"]:[]),...f.docs].join("; ");}],["Notes",r=>r.notes]],S.pr.filter(r=>["date","approvedDate","poDate","grnDate","invoiceDate","paidDate"].some(k=>inMonth(r,m,k))||prOpen(r))))),
+    table([{h:"PR",f:r=>el("span",null,el("b",null,r.prNo),el("span",{class:"sub"},fmtDate(r.date)))},{h:"Description",wrap:1,f:r=>el("span",null,r.description,el("span",{class:"sub"},[r.category,r.site,r.requester].filter(Boolean).join(" · ")))},
+      {h:"Required by",f:r=>r.needBy?el("span",null,fmtDate(r.needBy),r.priority?el("span",{class:"sub"},r.priority+" priority"):null):"—"},{h:"Estimate",num:1,f:r=>isNum(r.estCost)?n(r.estCost,2)+" "+(r.currency||""):"—"},
+      {h:"Stage",f:r=>el("span",null,pill(r.status==="Paid"?"ok":prClosed(r.status)?"":stIdx(r.status)>=6?"ok":"",r.status),prog(r.status))},
+      {h:"Supplier / PO",f:r=>r.poNo||r.supplier?el("span",null,r.supplier||"—",el("span",{class:"sub"},[r.poNo,r.poDate?fmtDate(r.poDate):null].filter(Boolean).join(" · "))):"—"},
+      {h:"PO value",num:1,f:r=>isNum(r.poValue)?el("span",null,n(r.poValue,2)+" "+(r.currency||""),varPct(r)!=null?el("span",{class:"sub"},(varPct(r)>=0?"+":"")+varPct(r).toFixed(1)+"% vs estimate"):null):"—"},
+      {h:"GRN",f:r=>r.grnNo?el("span",null,r.grnNo,el("span",{class:"sub"},fmtDate(r.grnDate))):"—"},
+      {h:"Days",num:1,f:r=>{const l=prLead(r);return l.age==null?"—":el("span",null,String(l.age),el("span",{class:"sub"},r.grnDate?"PR → GRN":"open"));}},
+      {h:"Flags",wrap:1,f:r=>{const f=prFlags(r);if(!f.docs.length&&!f.late)return pill("ok","Complete");return el("div",{class:"flags"},f.late?pill("bad","Past required date"):null,f.docs.map(d=>pill("warn",d)));}},
+      {h:"",f:r=>editBtn(()=>openForm("pr",r))}],
+      rows,{emptyTitle:"No PRs in this view",emptyBody:"Register each purchase request with its PR number. Update the stage as it moves: approval, RFQ, PO, GRN, invoice, payment.",emptyBtn:addBtn("Purchase request",()=>openForm("pr"))})));
+  root.append(el("p",{class:"note"},"Lead times use the dates entered here: PR date to PO date, and PR date to GRN date. PO-vs-estimate assumes both values are in the PR currency. Thresholds for the number of quotations follow UK-Med's procurement policy; this page records what was obtained but does not judge compliance."));
+  return root;
+}
+
+const PR_EVT=[["date","PR raised"],["approvedDate","Approved"],["poDate","PO issued"],["grnDate","Delivered (GRN)"],["invoiceDate","Invoiced"],["paidDate","Paid"]];
+const NA="Data not available";
+function vReview(){
+  const m=curMonth(),t=todayStr(),root=el("div",{class:"review",id:"reviewDoc"});
+  const dN=daysInMonth(m),cm=t.slice(0,7),isCur=m===cm,elapsed=m<cm?dN:isCur?+t.slice(8):0;
+  const gc=assetsOf("generator").map(a=>genCalc(a.id,m)),vc=assetsOf("vehicle").map(a=>vehCalc(a.id,m)),sc=assetsOf("solar").map(a=>solarCalc(a.id,m)),ic=assetsOf("it").map(a=>itCalc(a.id));
+  const prM=S.pr.filter(r=>PR_EVT.some(([k])=>inMonth(r,m,k)));
+  const q=v=>n(v,2).replace(/\.00$/,"");
+  const sec=(no,title,intro,...kids)=>el("section",{class:"sec rv-sec"},el("div",{class:"sec-head"},el("div",null,el("h2",null,no+". "+title),intro?el("p",null,intro):null)),...kids);
+  const sub=txt=>el("div",{class:"rv-sub"},txt);
+  const acts=el("div",{class:"chips noprint"},downloads?el("button",{class:"btn primary",type:"button",onclick:downloadReview},"Download review (HTML)"):null,!window.claude?el("button",{class:"btn",type:"button",onclick:()=>window.print()},"Print / save as PDF"):null);
+  root.append(el("div",{class:"rv-head"},el("div",{class:"ey"},"UK-Med · Sudan mission · Logistics department"),el("h2",{class:"rv-title"},"Monthly logistics review — "+monthLabel(m)),
+    el("div",{class:"meta"},"Prepared by Manuel Hernández Díez, Logistics Manager · compiled "+fmtDate(t)+" from the records on this board"+(isCur?" · month in progress: "+elapsed+" of "+dN+" days":m>cm?" · future month":"")),
+    el("div",{class:"rv-legend"},"Every figure is calculated from the entries recorded on the board. “—” or “"+NA+"” means nothing was recorded; it does not mean zero."),acts));
+
+  // 1 summary
+  root.append(sec(1,"Summary of the month",null,el("div",{class:"tiles"},
+    tile("PRs raised",String(S.pr.filter(r=>inMonth(r,m)).length),"",S.pr.filter(r=>inMonth(r,m,"poDate")).length+" POs issued · "+S.pr.filter(r=>inMonth(r,m,"grnDate")).length+" delivered · "+S.pr.filter(r=>inMonth(r,m,"paidDate")).length+" paid"),
+    tile("Generator diesel added",n(sum(gc,c=>c.fuel)),"L",n(sum(gc,c=>c.hours),1)+" running hours"),
+    tile("Generator & solar maintenance",String(S.genmaint.filter(r=>inMonth(r,m)).length+S.solar.filter(r=>inMonth(r,m)).length),"",S.genmaint.filter(r=>inMonth(r,m)).length+" generator jobs · "+S.solar.filter(r=>inMonth(r,m)).length+" solar checks"),
+    tile("Vehicle distance",n(sum(vc,c=>c.kmM)),"km",sum(vc,c=>c.ml.length)+" daily logs · "+n(sum(vc,c=>c.fuelM),1)+" L fuel added"),
+    tile("IT & comms jobs",String(S.itlog.filter(r=>inMonth(r,m)).length),"",ic.filter(x=>x.state==="bad"||x.state==="warn").length+" items needing attention at compilation"),
+    tile("Facility tasks completed",String(S.facility.filter(r=>r.status==="Done"&&inMonth(r,m,"doneDate")).length),"",S.facility.filter(r=>r.status!=="Done").length+" still open at compilation"))));
+
+  // 2 procurement
+  const lPO=S.pr.filter(r=>inMonth(r,m,"poDate")).map(r=>prLead(r).po).filter(isNum),lGRN=S.pr.filter(r=>inMonth(r,m,"grnDate")).map(r=>prLead(r).grn).filter(isNum);
+  root.append(sec(2,"Procurement","PRs with at least one recorded step (raised, approved, PO, delivery, invoice, payment) dated in "+monthLabel(m)+".",
+    el("dl",{class:"kv",style:"max-width:560px"},
+      el("dt",null,"Estimated value of PRs raised"),el("dd",null,sumByCur(S.pr.filter(r=>inMonth(r,m)),r=>r.estCost)),
+      el("dt",null,"Value committed by POs issued"),el("dd",null,sumByCur(S.pr.filter(r=>inMonth(r,m,"poDate")),r=>r.poValue)),
+      el("dt",null,"Value paid"),el("dd",null,sumByCur(S.pr.filter(r=>inMonth(r,m,"paidDate")),r=>r.poValue)),
+      el("dt",null,"Average days PR → PO"),el("dd",null,lPO.length?n(avg(lPO),1)+" (n="+lPO.length+")":NA),
+      el("dt",null,"Average days PR → delivery"),el("dd",null,lGRN.length?n(avg(lGRN),1)+" (n="+lGRN.length+")":NA),
+      el("dt",null,"Open PRs at compilation"),el("dd",null,String(S.pr.filter(prOpen).length))),
+    table([{h:"PR",f:r=>el("b",null,r.prNo)},{h:"Description",wrap:1,f:r=>el("span",null,r.description,el("span",{class:"sub"},[r.category,r.site].filter(Boolean).join(" · ")))},{h:"Steps this month",wrap:1,f:r=>PR_EVT.filter(([k])=>inMonth(r,m,k)).map(([k,l])=>l+" "+fmtDate(r[k]).slice(0,6)).join(" · ")},{h:"Current stage",f:r=>r.status},{h:"Supplier / PO",f:r=>[r.supplier,r.poNo].filter(Boolean).join(" · ")||"—"},{h:"Value",num:1,f:r=>isNum(r.poValue)?n(r.poValue,2)+" "+(r.currency||""):isNum(r.estCost)?n(r.estCost,2)+" "+(r.currency||"")+" (est.)":"—"},{h:"Flags",wrap:1,f:r=>{const f=prFlags(r);const a=[...(f.late?["Past required date"]:[]),...f.docs];return a.length?a.join("; "):"None"}}],
+      sortDate(prM),{emptyTitle:"No procurement activity recorded in "+monthLabel(m)})));
+
+  // 3 generators + spares
+  const mtM=sortDate(S.genmaint.filter(r=>inMonth(r,m)));
+  const mvM=sortDate(S.sparemov.filter(r=>inMonth(r,m)));
+  const pName=id=>(S.spares.find(p=>p.id===id)||{}).name||"(removed part)";
+  root.append(sec(3,"Generators and spare parts",null,
+    table([{h:"Generator",f:c=>el("span",null,el("b",null,c.a.name),el("span",{class:"sub"},[c.a.model,c.a.rating].filter(Boolean).join(" · ")))},{h:"Days logged",num:1,f:c=>new Set(c.ml.map(r=>r.date)).size+" / "+(elapsed||dN)},{h:"Running h",num:1,f:c=>c.hoursLogged?n(c.hours,1):"—"},{h:"Diesel added L",num:1,f:c=>c.ml.some(r=>isNum(r.fuelL))?n(c.fuel,1):"—"},{h:"L / run h",num:1,f:c=>c.lph!=null?n(c.lph,2):"—"},{h:"Meter (latest)",num:1,f:c=>n(c.meter,1)},{h:"Meter breaks",num:1,f:c=>String(Object.keys(c.gaps).filter(id=>c.ml.some(r=>r.id===id)).length)},{h:"Service status",wrap:1,f:c=>c.stateTxt}],gc,{emptyTitle:"No generator registered"}),
+    sub("Maintenance carried out"),
+    table([{h:"Date",f:r=>fmtDate(r.date)},{h:"Generator",f:r=>aName(r.asset)},{h:"Work done",f:r=>r.type},{h:"Meter h",num:1,f:r=>n(r.hours,1)},{h:"Part used",f:r=>r.part?pName(r.part)+" × "+q(r.partQty):"—"},{h:"Technician",f:r=>r.by},{h:"Ref.",f:r=>r.ref},{h:"Findings",wrap:1,f:r=>r.notes}],mtM,{emptyTitle:"No generator maintenance recorded in "+monthLabel(m)}),
+    sub("Spare-part movements"),
+    table([{h:"Date",f:r=>fmtDate(r.date)},{h:"Part",f:r=>pName(r.part)},{h:"Movement",f:r=>r.dir},{h:"Qty",num:1,f:r=>q(r.qty)},{h:"Reference",wrap:1,f:r=>r.ref}],mvM,{emptyTitle:"No stock movements recorded in "+monthLabel(m)}),
+    sub("Stock position at compilation"),
+    table([{h:"Part",f:p=>p.name},{h:"Stock",num:1,f:p=>q(partStock(p.id))+" "+(p.unit||"")},{h:"Minimum",num:1,f:p=>isNum(p.minQty)?q(p.minQty):"Not set"},{h:"Status",f:p=>{const s=partStock(p.id);return s<0?"Negative — records to check":!isNum(p.minQty)?"No minimum set":s<=0?"Out of stock":s<=p.minQty?"Reorder":"OK";}}],S.spares.slice().sort((a,b)=>a.name.localeCompare(b.name)),{emptyTitle:"No spare parts in the catalogue"})));
+
+  // 4 solar
+  const solM=sortDate(S.solar.filter(r=>inMonth(r,m)));
+  root.append(sec(4,"Solar systems",null,
+    table([{h:"System",f:c=>c.a.name},{h:"Checks in month",num:1,f:c=>String(c.mc.length)},{h:"Last check",f:c=>c.last?fmtDate(c.last.date):"—"},{h:"Status at compilation",wrap:1,f:c=>c.txt}],sc,{emptyTitle:"No solar system registered"}),
+    sub("Checks carried out"),
+    table([{h:"Date",f:r=>fmtDate(r.date)},{h:"System",f:r=>aName(r.asset)},{h:"Panels",f:r=>r.panels},{h:"Items with issue",wrap:1,f:r=>SOLAR_CHECKS.filter(([k])=>r[k]==="Issue").map(x=>x[1]).join(", ")||"None"},{h:"Batt V",num:1,f:r=>n(r.battV,2)},{h:"SoC %",num:1,f:r=>n(r.socPct)},{h:"By",f:r=>r.by},{h:"Findings",wrap:1,f:r=>r.notes}],solM,{emptyTitle:"No solar checks recorded in "+monthLabel(m)})));
+
+  // 5 fleet
+  const trips=sortDate(S.vehlog.filter(r=>inMonth(r,m)));
+  const kmf=r=>isNum(r.odoStart)&&isNum(r.odoEnd)&&r.odoEnd>=r.odoStart?r.odoEnd-r.odoStart:null;
+  const purp=[...new Set(trips.map(r=>r.purpose||"Not recorded"))].map(p=>({p,rows:trips.filter(r=>(r.purpose||"Not recorded")===p)}));
+  root.append(sec(5,"Fleet",null,
+    table([{h:"Vehicle",f:c=>el("span",null,el("b",null,c.a.name),el("span",{class:"sub"},c.a.plate||""))},{h:"Days used",num:1,f:c=>c.days+" / "+(elapsed||dN)},{h:"Km",num:1,f:c=>c.ml.length?n(c.kmM):"—"},{h:"Fuel added L",num:1,f:c=>c.ml.some(r=>isNum(r.fuelL))?n(c.fuelM,1):"—"},{h:"L/100 km",num:1,f:c=>c.l100!=null?n(c.l100,1):"—"},{h:"Odometer gaps",num:1,f:c=>String(Object.keys(c.gaps).filter(id=>c.ml.some(r=>r.id===id)).length)},{h:"Service status",wrap:1,f:c=>c.txt}],vc,{emptyTitle:"No vehicle registered"}),
+    sub("Movements by purpose"),
+    table([{h:"Purpose",f:x=>x.p},{h:"Daily logs",num:1,f:x=>String(x.rows.length)},{h:"Km",num:1,f:x=>n(sum(x.rows,kmf))}],purp,{emptyTitle:"No trips recorded in "+monthLabel(m)}),
+    trips.length?sub("Trip log"):null,
+    trips.length?table([{h:"Date",f:r=>fmtDate(r.date)},{h:"Vehicle",f:r=>aName(r.asset)},{h:"Driver",f:r=>r.driver},{h:"Km",num:1,f:r=>n(kmf(r))},{h:"Purpose",f:r=>r.purpose},{h:"Places visited",wrap:1,f:r=>r.visits},{h:"Fuel L",num:1,f:r=>n(r.fuelL,1)},{h:"Remarks",wrap:1,f:r=>r.notes}],trips):null));
+
+  // 6 IT
+  const itM=sortDate(S.itlog.filter(r=>inMonth(r,m)));
+  root.append(sec(6,"IT and communications",null,
+    table([{h:"Date",f:r=>fmtDate(r.date)},{h:"Equipment",f:r=>aName(r.asset)},{h:"Category",f:r=>catName((asset(r.asset)||{}).cat)},{h:"Work done",f:r=>r.work},{h:"Result",f:r=>r.result},{h:"Readings",wrap:1,f:r=>itReadings(r)||"—"},{h:"Findings",wrap:1,f:r=>r.notes}],itM,{emptyTitle:"No IT or comms work recorded in "+monthLabel(m)}),
+    sub("Equipment needing attention at compilation"),
+    table([{h:"Equipment",f:x=>x.a.name},{h:"Category",f:x=>catName(x.a.cat)},{h:"Site",f:x=>x.a.site},{h:"Status",f:x=>x.st},{h:"Finding",wrap:1,f:x=>[x.txt,x.renew&&x.renew[0]!=="ok"?x.renew[1]:null].filter(Boolean).join(" · ")}],ic.filter(x=>x.state==="bad"||x.state==="warn"||(x.renew&&x.renew[0]!=="ok")),{emptyTitle:"No IT or comms equipment flagged"})));
+
+  // 7 facilities
+  const done=sortDate(S.facility.filter(r=>r.status==="Done"&&inMonth(r,m,"doneDate")));
+  const open=S.facility.filter(r=>r.status!=="Done");
+  root.append(sec(7,"Facilities — Office, Guesthouse, MERU Clinic",null,
+    table([{h:"Site",f:s=>s},{h:"Reported in month",num:1,f:s=>String(S.facility.filter(r=>r.site===s&&inMonth(r,m)).length)},{h:"Completed in month",num:1,f:s=>String(done.filter(r=>r.site===s).length)},{h:"Open at compilation",num:1,f:s=>String(open.filter(r=>r.site===s).length)},{h:"Cost of completed work",num:1,f:s=>costStr(done.filter(r=>r.site===s))}],SITES),
+    sub("Work completed"),
+    table([{h:"Completed",f:r=>fmtDate(r.doneDate)},{h:"Site",f:r=>r.site},{h:"Task",wrap:1,f:r=>el("span",null,r.task,el("span",{class:"sub"},[r.area,r.location].filter(Boolean).join(" · ")))},{h:"Days to complete",num:1,f:r=>r.date?String(diffDays(r.date,r.doneDate)):"—"},{h:"Cost",num:1,f:r=>isNum(r.cost)?n(r.cost,2)+" "+(r.currency||""):"—"}],done,{emptyTitle:"No facility tasks completed in "+monthLabel(m)}),
+    open.length?sub("Still open at compilation"):null,
+    open.length?table([{h:"Site",f:r=>r.site},{h:"Task",wrap:1,f:r=>r.task},{h:"Priority",f:r=>r.priority},{h:"Status",f:r=>r.status},{h:"Reported",f:r=>fmtDate(r.date)},{h:"Days open",num:1,f:r=>r.date?String(diffDays(r.date,t)):"—"}],open.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||""))):null));
+
+  // 8 data completeness & exceptions
+  const ex=[];
+  gc.forEach(c=>{const d=new Set(c.ml.map(r=>r.date)).size;if(elapsed&&d<elapsed)ex.push(["Generators",c.a.name+": daily log recorded on "+d+" of "+elapsed+" days","Missing days reduce the reliability of hours, fuel and L/h figures"]);
+    const g=Object.keys(c.gaps).filter(id=>c.ml.some(r=>r.id===id)).length;if(g)ex.push(["Generators",c.a.name+": "+g+" hour-meter break(s) between consecutive logs","Start reading differs from the previous end reading"]);
+    if(c.state==="bad"||c.state==="warn")ex.push(["Generators",c.a.name+": "+c.stateTxt,""]);});
+  S.spares.forEach(p=>{if(partStock(p.id)<0)ex.push(["Spare parts",p.name+": calculated stock is negative ("+q(partStock(p.id))+")","More issued than received is recorded — an IN movement or opening stock is missing"]);});
+  vc.forEach(c=>{const g=Object.keys(c.gaps).filter(id=>c.ml.some(r=>r.id===id));if(g.length)ex.push(["Fleet",c.a.name+": "+g.length+" odometer gap(s), "+n(sum(g,id=>Math.abs(c.gaps[id])))+" km not covered by a log","Distance driven without a matching log entry"]);
+    if(c.state==="bad"||c.state==="warn")ex.push(["Fleet",c.a.name+": "+c.txt,""]);});
+  sc.forEach(c=>{if(c.state==="bad"||c.state==="warn")ex.push(["Solar",c.a.name+": "+c.txt,""]);});
+  S.pr.filter(r=>prFlags(r).late).forEach(r=>ex.push(["Procurement","PR "+r.prNo+": past required date ("+fmtDate(r.needBy)+"), stage "+r.status,""]));
+  S.pr.forEach(r=>{const f=prFlags(r).docs;if(f.length)ex.push(["Procurement","PR "+r.prNo+": "+f.join("; "),"Documentation to complete before audit"]);});
+  S.facility.filter(r=>r.status!=="Done"&&r.due&&r.due<t).forEach(r=>ex.push(["Facilities",r.site+": “"+r.task+"” past target date "+fmtDate(r.due),""]));
+  const reg=S.assets.filter(a=>a.kind==="generator"?!isNum(a.serviceHours):a.kind==="vehicle"?!(isNum(a.serviceKm)&&isNum(a.lastServiceOdo)):!isNum(a.checkDays));
+  if(reg.length)ex.push(["Register",reg.length+" item(s) without a service or check interval: "+reg.map(a=>a.name).join(", "),"Alerts cannot be calculated for these items"]);
+  root.append(sec(8,"Data completeness and exceptions","Factual findings from the records. Causes are not inferred; each item needs verification on site.",
+    table([{h:"Area",f:x=>x[0]},{h:"Finding",wrap:1,f:x=>x[1]},{h:"Why it matters",wrap:1,f:x=>x[2]||"—"}],ex,{emptyTitle:"No exceptions found in the records"})));
+  return root;
+}
+async function downloadReview(){
+  const node=$("reviewDoc").cloneNode(true);node.querySelectorAll(".noprint").forEach(x=>x.remove());
+  const css=[...document.querySelectorAll("style")].map(s=>s.textContent).join("\n");
+  const html='<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>UK-Med Sudan Logistics Review '+curMonth()+'</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"><style>'+css+'</style></head><body><main class="wrap" style="padding-block:28px">'+node.outerHTML+'</main></body></html>';
+  try{await downloads.save({filename:"UK-Med_Sudan_Logistics_Review_"+curMonth()+".html",data:html});toast("Review downloaded");}
+  catch(e){if(e&&e.code!=="declined")toast("Download not available here ("+(e.code||"error")+"). Use the standalone HTML version.");}
+}
+
+function vIT(){
+  const m=curMonth(),root=el("div"),all=assetsOf("it");
+  root.append(el("section",{class:"sec"},el("div",{class:"sec-head"},el("div",null,el("h2",null,"IT & communications"),el("p",null,"Computers, Garmin units, VHF radios, Starlink and other comms equipment: status, preventive checks and repairs.")),
+    el("div",{class:"chips"},addBtn("IT equipment",()=>openForm("assets",null,{kind:"it"})),all.length?addBtn("Maintenance / check",()=>openForm("itlog")):null))));
+  if(!all.length){root.append(emptyBox("No IT or comms equipment registered","Add each laptop, Garmin, VHF radio and Starlink kit with its serial number and check interval.",addBtn("IT equipment",()=>openForm("assets",null,{kind:"it"}))));return root;}
+  const calcs=all.map(a=>itCalc(a.id));
+  root.append(el("div",{class:"tiles",style:"margin-bottom:14px"},IT_CATS.filter(([c])=>all.some(a=>a.cat===c)).map(([c,l])=>{const cs=calcs.filter(x=>x.a.cat===c&&x.st!=="Disposed");
+    const att=cs.filter(x=>x.state==="bad"||x.state==="warn").length;return tile(l,String(cs.filter(x=>x.st==="In service").length),"/ "+cs.length+" in service",att?att+" need attention":"No alerts");})));
+  root.append(el("div",{class:"chips",style:"margin-bottom:10px"},[["all","All categories"],...IT_CATS.filter(([c])=>all.some(a=>a.cat===c))].map(([v,l])=>el("button",{class:"chip",type:"button","aria-pressed":String(filt.it===v),onclick:()=>{filt.it=v;render();}},l))));
+  const sel=calcs.filter(x=>filt.it==="all"||x.a.cat===filt.it);
+  const ord={bad:0,warn:1,nodata:2,ok:3,off:4};sel.sort((a,b)=>ord[a.state]-ord[b.state]||a.a.name.localeCompare(b.a.name));
+  const stPill=x=>x.state==="off"?pill("","Disposed"):pill(x.state==="nodata"?"":x.state,x.state==="ok"?"OK":x.state==="warn"?"Attention":x.state==="bad"?"Action needed":"No data");
+  root.append(el("section",{class:"sec"},el("div",{class:"sec-head"},el("h3",null,"Equipment status"),exportBtn(()=>exportCsv("it_equipment",[["Name",x=>x.a.name],["Category",x=>catName(x.a.cat)],["Model",x=>x.a.model],["Serial / tag",x=>x.a.serial],["Site",x=>x.a.site],["Assigned to",x=>x.a.assigned],["Status",x=>x.st],["Last check",x=>x.last?x.last.date:""],["Last result",x=>x.last?x.last.result:""],["Next check",x=>x.next],["Renewal date",x=>x.a.renewDate],["Alert",x=>x.txt]],sel))),
+    table([{h:"Equipment",f:x=>el("span",null,el("b",null,x.a.name),el("span",{class:"sub"},[x.a.model,x.a.serial].filter(Boolean).join(" · ")||"Model / serial not recorded"))},{h:"Category",f:x=>catName(x.a.cat)},{h:"Site",f:x=>x.a.site},{h:"Assigned to",f:x=>x.a.assigned},{h:"Status",f:x=>x.st},
+      {h:"Last check",f:x=>x.last?el("span",null,fmtDate(x.last.date),el("span",{class:"sub"},x.last.work+" · "+x.last.result)):"—"},{h:"Alert",wrap:1,f:x=>el("span",null,stPill(x),el("span",{class:"sub"},x.txt))},{h:"Renewal",f:x=>x.renew?pill(x.renew[0],x.renew[1]):"—"},
+      {h:"",f:x=>el("span",{style:"display:flex;gap:4px"},editBtn(()=>openForm("assets",x.a)),canWrite&&x.st!=="Disposed"?el("button",{class:"btn small",type:"button",onclick:()=>openForm("itlog",null,{asset:x.a.id})},"+ Check"):null)}],sel)));
+  const stl=all.filter(a=>a.cat==="starlink"&&(filt.it==="all"||filt.it==="starlink"));
+  if(stl.length){const dN=daysInMonth(m),labels=[...Array(dN)].map((_,i)=>fmtDate(m+"-"+pad(i+1)));const acc=[...Array(dN)].map(()=>[]);
+    S.itlog.filter(r=>inMonth(r,m)&&stl.some(a=>a.id===r.asset)&&isNum(r.dlMbps)).forEach(r=>acc[+r.date.slice(8)-1].push(r.dlMbps));
+    const vals=acc.map(a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:null);
+    root.append(el("div",{style:"margin:6px 0 10px"},barChart("Starlink download speed (average of tests per day)","Mbps",vals,labels,"var(--bar)")));
+    root.append(el("p",{class:"note",style:"margin-bottom:22px"},"Speed values are the tests recorded in this board. Test from the same device and at a similar time of day so the readings are comparable."));}
+  const rows=sortDate(S.itlog.filter(r=>inMonth(r,m)&&sel.some(x=>x.a.id===r.asset))).reverse();
+  root.append(el("section",{class:"sec"},el("div",{class:"sec-head"},el("h3",null,"Maintenance & checks · "+monthLabel(m)),exportBtn(()=>exportCsv("it_maintenance",[["Date",r=>r.date],["Equipment",r=>aName(r.asset)],["Category",r=>catName((asset(r.asset)||{}).cat)],["Work done",r=>r.work],["Result",r=>r.result],["Readings",itReadings],["Download Mbps",r=>r.dlMbps],["Upload Mbps",r=>r.ulMbps],["Done by",r=>r.by],["Reference",r=>r.ref],["Findings",r=>r.notes]],sortDate(rows)))),
+    table([{h:"Date",f:r=>fmtDate(r.date)},{h:"Equipment",f:r=>el("span",null,aName(r.asset),el("span",{class:"sub"},catName((asset(r.asset)||{}).cat)))},{h:"Work done",f:r=>r.work},{h:"Result",f:r=>pill(r.result==="OK"?"ok":r.result==="Issue"?"warn":"bad",r.result)},{h:"Readings",wrap:1,f:r=>itReadings(r)||"—"},{h:"Done by",f:r=>r.by},{h:"Findings",wrap:1,f:r=>r.notes},{h:"",f:r=>editBtn(()=>openForm("itlog",r))}],
+      rows,{emptyTitle:"No IT maintenance recorded in "+monthLabel(m),emptyBody:"Log preventive checks, updates, backups, radio test calls, Starlink speed tests and repairs.",emptyBtn:addBtn("Maintenance / check",()=>openForm("itlog"))})));
+  return root;
+}
+
+function vFacilities(){
+  const m=curMonth(),t=todayStr(),root=el("div");
+  root.append(el("section",{class:"sec"},el("div",{class:"sec-head"},el("div",null,el("h2",null,"Facility maintenance"),el("p",null,"Small repairs and recurring jobs at the Office, Guesthouse and MERU Clinic.")),addBtn("Task",()=>openForm("facility")))));
+  root.append(el("div",{class:"tiles",style:"margin-bottom:14px"},SITES.map(s=>{const open=S.facility.filter(r=>r.site===s&&r.status!=="Done");const late=open.filter(r=>r.due&&r.due<t).length;
+    return tile(s,String(open.length),"open",(late?late+" past target date · ":"")+S.facility.filter(r=>r.site===s&&r.status==="Done"&&inMonth(r,m,"doneDate")).length+" done in "+m);})));
+  root.append(el("div",{class:"chips",style:"margin-bottom:8px"},[["all","All sites"],...SITES.map(s=>[s,s])].map(([v,l])=>el("button",{class:"chip",type:"button","aria-pressed":String(filt.fac===v),onclick:()=>{filt.fac=v;render();}},l))));
+  root.append(el("div",{class:"chips",style:"margin-bottom:12px"},[["open","Open & in progress"],["month","Reported or done in "+m],["all","All tasks"]].map(([v,l])=>el("button",{class:"chip",type:"button","aria-pressed":String(filt.facStatus===v),onclick:()=>{filt.facStatus=v;render();}},l))));
+  const pr={High:0,Medium:1,Low:2};
+  let rows=S.facility.filter(r=>filt.fac==="all"||r.site===filt.fac);
+  if(filt.facStatus==="open")rows=rows.filter(r=>r.status!=="Done");
+  else if(filt.facStatus==="month")rows=rows.filter(r=>inMonth(r,m)||inMonth(r,m,"doneDate"));
+  rows.sort((a,b)=>(a.status==="Done")-(b.status==="Done")||pr[a.priority]-pr[b.priority]||(a.date||"").localeCompare(b.date||""));
+  root.append(el("section",{class:"sec"},el("div",{class:"sec-head"},el("h3",null,rows.length+" task"+(rows.length===1?"":"s")),exportBtn(()=>exportCsv("facility_tasks",[["Site",r=>r.site],["Category",r=>r.area],["Task",r=>r.task],["Location",r=>r.location],["Priority",r=>r.priority],["Status",r=>r.status],["Reported",r=>r.date],["Target",r=>r.due],["Completed",r=>r.doneDate],["Days open",r=>diffDays(r.date,r.doneDate||t)],["Assigned",r=>r.assigned],["Cost",r=>r.cost],["Currency",r=>r.currency],["Notes",r=>r.notes]],S.facility.filter(r=>inMonth(r,m)||inMonth(r,m,"doneDate")||r.status!=="Done")))),
+    table([{h:"Site",f:r=>r.site},{h:"Task",wrap:1,f:r=>el("span",null,el("b",null,r.task),el("span",{class:"sub"},[r.area,r.location].filter(Boolean).join(" · ")))},{h:"Priority",f:r=>pill(r.priority==="High"?"bad":r.priority==="Medium"?"warn":"",r.priority)},{h:"Status",f:r=>pill(r.status==="Done"?"ok":r.due&&r.due<t?"bad":"",r.status==="Done"?"Done":r.due&&r.due<t?r.status+" · late":r.status)},{h:"Reported",f:r=>fmtDate(r.date)},{h:"Target",f:r=>r.due?fmtDate(r.due):"—"},{h:"Days open",num:1,f:r=>r.date?String(diffDays(r.date,r.doneDate||t)):"—"},{h:"Assigned",f:r=>r.assigned},{h:"Cost",num:1,f:r=>isNum(r.cost)?n(r.cost,2)+" "+(r.currency||""):"—"},{h:"",f:r=>editBtn(()=>openForm("facility",r))}],
+      rows,{emptyTitle:"No tasks in this view",emptyBody:"Log each defect or job: blocked drain, AC not cooling, broken lock, bulb, leaking tap…",emptyBtn:addBtn("Task",()=>openForm("facility"))})));
+  return root;
+}
+
+function vRegistry(){
+  const root=el("div");
+  root.append(el("section",{class:"sec"},el("div",{class:"sec-head"},el("div",null,el("h2",null,"Equipment register"),el("p",null,"The service intervals entered here drive every alert on the board. Use the figures from each manufacturer's manual.")),addBtn("Equipment",()=>openForm("assets")))));
+  [["generator","Generators"],["solar","Solar systems"],["vehicle","Vehicles"],["it","IT & communications"]].forEach(([k,l])=>{
+    const rows=assetsOf(k);const miss=a=>k==="generator"?!isNum(a.serviceHours):k==="vehicle"?!(isNum(a.serviceKm)&&isNum(a.lastServiceOdo)):!isNum(a.checkDays);
+    root.append(el("section",{class:"sec"},el("h3",null,l),table([
+      {h:"Name",f:a=>el("span",null,el("b",null,a.name),k==="it"?el("span",{class:"sub"},catName(a.cat)+" · "+(a.status||"In service")):null)},{h:"Site",f:a=>a.site},{h:"Make & model",f:a=>a.model||"Not recorded"},{h:"Rating",f:a=>a.rating||"Not recorded"},{h:k==="vehicle"?"Plate":"Serial / tag",f:a=>(k==="vehicle"?a.plate:a.serial)||"Not recorded"},
+      {h:"Service basis",f:a=>k==="generator"?(isNum(a.serviceHours)?"Every "+n(a.serviceHours)+" h":null):k==="vehicle"?(isNum(a.serviceKm)?"Every "+n(a.serviceKm)+" km"+(isNum(a.lastServiceOdo)?" · last @ "+n(a.lastServiceOdo)+" km":""):null):(isNum(a.checkDays)?"Every "+a.checkDays+" days":null)},
+      {h:"Register",f:a=>miss(a)?pill("warn","Interval missing"):pill("ok","Complete")},{h:"",f:a=>editBtn(()=>openForm("assets",a))}],rows,
+      {emptyTitle:"None registered",emptyBody:"",emptyBtn:addBtn(k==="it"?"IT equipment":l.replace(/s$/,""),()=>openForm("assets",null,{kind:k}))})));
+  });
+  return root;
+}
+
+/* ---------- shell ---------- */
+const VIEWS={overview:vOverview,procurement:vProcurement,generators:vGenerators,review:vReview,solar:vSolar,vehicles:vVehicles,it:vIT,facilities:vFacilities,registry:vRegistry};
+function badges(){const m=curMonth(),t=todayStr();const b={};
+  b.generators=assetsOf("generator").filter(a=>{const s=genCalc(a.id,m).state;return s==="bad"||s==="warn";}).length;
+  b.generators+=S.spares.filter(p=>isNum(p.minQty)&&partStock(p.id)<=p.minQty).length;
+  b.solar=assetsOf("solar").filter(a=>{const s=solarCalc(a.id,m).state;return s==="bad"||s==="warn";}).length;
+  b.vehicles=assetsOf("vehicle").filter(a=>{const s=vehCalc(a.id,m).state;return s==="bad"||s==="warn";}).length;
+  b.procurement=S.pr.filter(r=>{const f=prFlags(r);return f.late||f.docs.length;}).length;
+  b.it=assetsOf("it").filter(a=>{const x=itCalc(a.id);return x.state==="bad"||x.state==="warn"||(x.renew&&x.renew[0]!=="ok");}).length;
+  b.facilities=S.facility.filter(r=>r.status!=="Done"&&(r.priority==="High"||(r.due&&r.due<t))).length;return b;}
+function drawTabs(){const b=badges();const nav=$("tabs");nav.textContent="";
+  TABS.forEach(([k,l])=>nav.append(el("button",{type:"button",role:"tab","aria-selected":String(tab===k),onclick:()=>go(k)},l,b[k]?el("span",{class:"n"},String(b[k])):null)));}
+function go(k){tab=k;try{history.replaceState(null,"","#"+k);}catch(e){}render();window.scrollTo({top:0});}
+function render(){drawTabs();const v=$("view");v.textContent="";
+  const ready=COLLS.every(c=>loaded[c]);
+  if(!db&&!ready){v.append(emptyBox("Loading the shared logbook…","If this message stays, sign in to claude.ai to use this board."));return;}
+  v.append(VIEWS[tab]());}
+monthEl.addEventListener("change",render);
+let rt=null;window.addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(render,200);});
+
+/* ---------- boot ---------- */
+monthEl.value=todayStr().slice(0,7);
+$("today").textContent="Today "+fmtDate(todayStr());
+const h=(location.hash||"").slice(1);if(VIEWS[h])tab=h;else if(h==="spares")tab="generators";
+render();
+/* ---------- local offline store (this browser) ---------- */
+const KEY="ukmed-sudan-logboard-v1";
+let mem=null,storageOk=true;
+function loadAll(){try{const raw=localStorage.getItem(KEY);return raw?JSON.parse(raw):null;}catch(e){storageOk=false;return null;}}
+function saveAll(){try{localStorage.setItem(KEY,JSON.stringify(mem));}catch(e){storageOk=false;toast("Could not save in this browser. Use Backup now to keep your data.");}}
+const listeners={};
+function emit(c){const docs=Object.entries(mem[c]||{}).map(([id,d])=>({id,data:()=>d}));(listeners[c]||[]).forEach(fn=>fn({docs}));}
+function rid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
+db={collection(c){return{doc(id){id=id||rid();return{id,
+  async set(d){mem[c]=mem[c]||{};mem[c][id]=JSON.parse(JSON.stringify(d));saveAll();emit(c);},
+  async delete(){if(mem[c]&&mem[c][id]){delete mem[c][id];saveAll();emit(c);}}};},
+  onSnapshot(fn){(listeners[c]=listeners[c]||[]).push(fn);fn({docs:Object.entries(mem[c]||{}).map(([id,d])=>({id,data:()=>d}))});}};}};
+downloads={async save({filename,data}){const b=new Blob([data],{type:filename.endsWith(".json")?"application/json":"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=filename;document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}};
+mem=loadAll();
+if(!mem){mem={};COLLS.forEach(c=>mem[c]={});
+  mem.assets={"gen-office":{kind:"generator",name:"Generator — Office",site:"Office",created:1},
+    "gen-clinic":{kind:"generator",name:"Generator — MERU Clinic",site:"MERU Clinic",created:2},
+    "sol-office":{kind:"solar",name:"Solar system — Office",site:"Office",created:3},
+    "sol-clinic":{kind:"solar",name:"Solar system — MERU Clinic",site:"MERU Clinic",created:4}};
+  saveAll();}
+COLLS.forEach(c=>{if(!mem[c])mem[c]={};db.collection(c).onSnapshot(snap=>{S[c]=snap.docs.map(x=>Object.assign({id:x.id},x.data()));loaded[c]=true;render();});});
+$("conn").className=storageOk?"live":"off";
+$("conn").lastChild.textContent=storageOk?"Saved in this browser on this computer · use Backup regularly":"This browser blocks local saving — work is lost on close unless you Backup";
+$("bkBtn").addEventListener("click",()=>{const d=todayStr();downloads.save({filename:"Sudan_Logistics_Backup_"+d+".json",data:JSON.stringify({app:KEY,exported:new Date().toISOString(),data:mem},null,1)});toast("Backup file downloaded");});
+$("rsFile").addEventListener("change",async e=>{const f=e.target.files[0];if(!f)return;try{const j=JSON.parse(await f.text());const d=j&&j.app===KEY?j.data:null;if(!d||typeof d!=="object")throw 0;
+  mem={};COLLS.forEach(c=>mem[c]=d[c]&&typeof d[c]==="object"?d[c]:{});saveAll();COLLS.forEach(emit);toast("Backup restored: "+Object.values(mem).reduce((s,o)=>s+Object.keys(o).length,0)+" records");}
+  catch(err){toast("That file is not a backup from this board.");}e.target.value="";});
+})();
+</script>
+
+</body>
+</html>
